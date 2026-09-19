@@ -77,9 +77,9 @@ namespace TVRename
             bnEditEntry = new Button();
             label4 = new Label();
             bnClose = new Button();
-            bwRescan = new System.ComponentModel.BackgroundWorker();
             pbProgress = new ProgressBar();
             lblStatusLabel = new Label();
+            btnStopScan = new Button();
             tabControl1.SuspendLayout();
             tbFolders.SuspendLayout();
             tbIgnore.SuspendLayout();
@@ -433,17 +433,18 @@ namespace TVRename
             olvFMNewShows.FullRowSelect = true;
             olvFMNewShows.Location = new System.Drawing.Point(4, 63);
             olvFMNewShows.Name = "olvFMNewShows";
+            olvFMNewShows.ShowCommandMenuOnRightClick = true;
             olvFMNewShows.Size = new System.Drawing.Size(982, 374);
             olvFMNewShows.SmallImageList = imagesPassFail;
             olvFMNewShows.TabIndex = 11;
+            olvFMNewShows.UseFilterIndicator = true;
+            olvFMNewShows.UseFiltering = true;
             olvFMNewShows.View = View.Details;
             olvFMNewShows.SelectedIndexChanged += lvFMNewShows_SelectedIndexChanged;
             olvFMNewShows.DragDrop += lvFMNewShows_DragDrop;
             olvFMNewShows.DragOver += lvFMNewShows_DragOver;
             olvFMNewShows.KeyDown += lvFMNewShows_KeyDown;
             olvFMNewShows.MouseDoubleClick += lvFMNewShows_MouseDoubleClick;
-            olvFMNewShows.UseFilterIndicator = true;
-            olvFMNewShows.UseFiltering = true;
             // 
             // olvFOlder
             // 
@@ -522,13 +523,6 @@ namespace TVRename
             bnClose.UseVisualStyleBackColor = true;
             bnClose.Click += bnClose_Click;
             // 
-            // bwRescan
-            // 
-            bwRescan.WorkerReportsProgress = true;
-            bwRescan.DoWork += bwRescan_DoWork;
-            bwRescan.ProgressChanged += bwRescan_ProgressChanged;
-            bwRescan.RunWorkerCompleted += bwRescan_RunWorkerCompleted;
-            // 
             // pbProgress
             // 
             pbProgress.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -543,18 +537,31 @@ namespace TVRename
             // 
             lblStatusLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             lblStatusLabel.ForeColor = System.Drawing.SystemColors.ControlDark;
-            lblStatusLabel.Location = new System.Drawing.Point(208, 510);
+            lblStatusLabel.Location = new System.Drawing.Point(301, 509);
             lblStatusLabel.Margin = new Padding(4, 0, 4, 0);
             lblStatusLabel.Name = "lblStatusLabel";
             lblStatusLabel.Size = new System.Drawing.Size(363, 27);
             lblStatusLabel.TabIndex = 29;
             lblStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // btnStopScan
+            // 
+            btnStopScan.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnStopScan.Location = new System.Drawing.Point(209, 509);
+            btnStopScan.Margin = new Padding(4, 3, 4, 3);
+            btnStopScan.Name = "btnStopScan";
+            btnStopScan.Size = new System.Drawing.Size(88, 27);
+            btnStopScan.TabIndex = 30;
+            btnStopScan.Text = "Stop Scan";
+            btnStopScan.UseVisualStyleBackColor = true;
+            btnStopScan.Click += btnStopScan_Click;
+            // 
             // BulkAddMovie
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(1002, 550);
+            Controls.Add(btnStopScan);
             Controls.Add(lblStatusLabel);
             Controls.Add(pbProgress);
             Controls.Add(bnClose);
@@ -613,7 +620,6 @@ namespace TVRename
         private System.Windows.Forms.Button bnEditEntry;
         private System.Windows.Forms.Button bnCheck2;
         private System.Windows.Forms.ImageList imagesPassFail;
-        private System.ComponentModel.BackgroundWorker bwRescan;
         private System.Windows.Forms.ProgressBar pbProgress;
         private System.Windows.Forms.Label lblStatusLabel;
         private ObjectListViewFlickerFree olvFMNewShows;
@@ -621,6 +627,6 @@ namespace TVRename
         private OLVColumn olvMovie;
         private OLVColumn olvYear;
         private OLVColumn olvSourceCode;
-
+        private Button btnStopScan;
     }
 }

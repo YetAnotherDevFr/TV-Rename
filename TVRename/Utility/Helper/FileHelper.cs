@@ -36,6 +36,12 @@ public static class FileHelper
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
+
+    public static async Task<DirectoryInfo[]> GetDirectoriesAsync(this DirectoryInfo di)
+    {
+        return await Task.Run(() => di.GetDirectories());
+    }
+
     public static void DeleteOrRecycleFile(FileInfo? file, TVSettings.TidySettings? Tidyup)
     {
         if (file is null)
@@ -1103,5 +1109,10 @@ public static class FileHelper
         return path.HasValue()
                && Directory.Exists(path)
                && Directory.EnumerateFileSystemEntries(path).Any();
+    }
+
+    internal static bool FileExists(string destination)
+    {
+        return File.Exists(destination);
     }
 }

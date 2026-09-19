@@ -7,6 +7,7 @@
 //
 
 using Alphaleonis.Win32.Filesystem;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -15,10 +16,14 @@ namespace TVRename;
 // "PossibleNewTVShow" represents a folder found by doing a Check in the 'Bulk Add TV Shows' dialog
 public class PossibleNewTvShow(DirectoryInfo directory, bool seasonFolders, string folderFormat) : ISeriesSpecifier, INotifyPropertyChanged
 {
-    public readonly DirectoryInfo Folder = directory;
-
     // ReSharper disable once InconsistentNaming
     internal int ProviderCode = -1;
+
+    public virtual string FolderName => directory.FullName;
+    public virtual string Show => (CodeKnown ? CachedSeries?.Name  : RefinedHint) ?? string.Empty;
+    public virtual string Type => HasSeasonFoldersGuess ? "Folder per season" : "Flat";
+    public virtual string SourceCode => CodeKnown ? ProviderCode.ToString() : string.Empty;
+    public virtual int ImageTypeName => CodeKnown && !string.IsNullOrWhiteSpace(FolderName) ? 1 : 0;
 
     internal TVDoc.ProviderType SourceProvider;
     public readonly bool HasSeasonFoldersGuess = seasonFolders;
@@ -36,6 +41,10 @@ public class PossibleNewTvShow(DirectoryInfo directory, bool seasonFolders, stri
     {
         SourceProvider = source;
         ProviderCode = id;
+
+        NotifyPropertyChanged("Show");
+        NotifyPropertyChanged("SourceCode");
+        NotifyPropertyChanged("ImageTypeName");
     }
 
     public TVDoc.ProviderType Provider => SourceProvider;
@@ -64,4 +73,8 @@ public class PossibleNewTvShow(DirectoryInfo directory, bool seasonFolders, stri
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
+    internal IEnumerable<FileInfo> FindFiles(string fileName)
+    {
+        return directory.EnumerateFiles(fileName) ;
+    }
 }
