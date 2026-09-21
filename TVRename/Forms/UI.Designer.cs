@@ -183,7 +183,7 @@ namespace TVRename.Forms
             toolStripSeparator13 = new ToolStripSeparator();
             tsbMyShowsContextMenu = new ToolStripButton();
             tbAllInOne = new TabPage();
-            olvAction = new ObjectListViewFlickerFree();
+            olvAction = new TVRename.ObjectListViewFlickerFree<TVRename.Item>();
             olvShowColumn = new OLVColumn();
             olvSeason = new OLVColumn();
             olvEpisode = new OLVColumn();
@@ -229,7 +229,7 @@ namespace TVRename.Forms
             calCalendar = new MonthCalendar();
             txtWhenToWatchSynopsis = new TextBox();
             toolStripContainer3 = new ToolStripContainer();
-            lvWhenToWatch = new ObjectListViewFlickerFree();
+            lvWhenToWatch = new TVRename.ObjectListViewFlickerFree<TVRename.ProcessedEpisode>();
             olvWTWShowColumn = new OLVColumn();
             olvWTWSeason = new OLVColumn();
             olvWTWEpisode = new OLVColumn();
@@ -2029,6 +2029,7 @@ namespace TVRename.Forms
             // olvWTWTime
             // 
             olvWTWTime.AspectName = "Time";
+            olvWTWTime.Groupable = false;
             olvWTWTime.GroupWithItemCountFormat = "{0} ({1} items)";
             olvWTWTime.GroupWithItemCountSingularFormat = "{0} (1 Item)";
             olvWTWTime.MinimumWidth = 10;
@@ -2641,7 +2642,7 @@ namespace TVRename.Forms
         private ToolStripSeparator toolStripSeparator14;
         private ToolStripButton tsbScanContextMenu;
         private ToolStripMenuItem tsmiOrphanFiles;
-        private ObjectListViewFlickerFree olvAction;
+        private ObjectListViewFlickerFree<Item> olvAction;
         private ToolStripButton tbActionJackettSearch;
         private ToolStripButton tsbScheduleJackettSearch;
         private TabPage tbMyMovies;
@@ -2709,6 +2710,6 @@ namespace TVRename.Forms
         private ToolStripMenuItem removeShowsWithNoFoldersToolStripMenuItem;
         private ToolStripMenuItem exportFilteredToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator25;
-        private ObjectListViewFlickerFree lvWhenToWatch;
+        private ObjectListViewFlickerFree<ProcessedEpisode> lvWhenToWatch;
     }
 }
