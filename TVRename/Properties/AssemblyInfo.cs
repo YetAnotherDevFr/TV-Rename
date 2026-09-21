@@ -14,12 +14,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("TV Rename")]
 [assembly: AssemblyProduct("TV Rename")]
-[assembly: AssemblyCopyright("Copyright © 2007-2020")]
+[assembly: AssemblyCopyright("Copyright © 2007-2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("3b5746c1-a5f7-48c2-a8de-95619489049b")]
 [assembly: NeutralResourcesLanguage("")]
-[assembly: AssemblyVersion("3.0.0.0")]
-[assembly: AssemblyFileVersion("3.0.0")]
-[assembly: AssemblyInformationalVersion("3.0.0")] // Display version
+[assembly: AssemblyVersion("5.0.1.0")]
+[assembly: AssemblyFileVersion("5.0.1")]
+[assembly: AssemblyInformationalVersion("5.0.1")] // Display version
