@@ -6,8 +6,8 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using System.Windows.Forms;
 using BrightIdeasSoftware;
+using Timer = System.Windows.Forms.Timer;
 
 namespace TVRename.Forms
 {
@@ -2295,7 +2295,6 @@ namespace TVRename.Forms
             // 
             statusTimer.Enabled = true;
             statusTimer.Interval = 250;
-            statusTimer.Tick += statusTimer_Tick;
             // 
             // BGDownloadTimer
             // 

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TVRename.Forms;
@@ -18,7 +18,6 @@ public partial class MergedEpisodeFinder : Form
         dupEps = [];
         mDoc = doc;
         mainUi = main;
-        Scan();
     }
 
     // ReSharper disable once InconsistentNaming
@@ -124,7 +123,7 @@ public partial class MergedEpisodeFinder : Form
 
         rightClickMenu.Items.Clear();
 
-        rightClickMenu.Add("Episode Guide", (_, _) => GotoEpGuide(si, mlastSelected));
+        rightClickMenu.Add("Episode Guide", async (_, _) => await GotoEpGuideAsync(si, mlastSelected));
         rightClickMenu.Add("Force Refresh", async (_, _) => await mainUi.ForceRefreshAsync(si, false));
         rightClickMenu.Add("Edit TV Show", async (_, _) => await mainUi.EditShowAsync(si));
 
@@ -133,7 +132,7 @@ public partial class MergedEpisodeFinder : Form
 
         rightClickMenu.AddSeparator();
         rightClickMenu.Add("Add Rule", (_, _) => AddRule(mlastSelected, si, mLastClicked));
-        
+
         rightClickMenu.Show(pt);
     }
 
@@ -147,17 +146,17 @@ public partial class MergedEpisodeFinder : Form
         dupEps.Remove(selected);
     }
 
-    private void GotoEpGuide(ShowConfiguration? si, PossibleMergedEpisode? mLastSelected)
+    private async Task GotoEpGuideAsync(ShowConfiguration? si, PossibleMergedEpisode? mLastSelected)
     {
         if (mLastSelected != null)
         {
-            mainUi.GotoEpguideFor(mLastSelected.Episode, true);
+            await mainUi.GotoEpguideForAsync(mLastSelected.Episode, true);
         }
         else
         {
             if (si != null)
             {
-                mainUi.GotoEpguideFor(si, true);
+                await mainUi.GotoEpguideForAsync(si, true);
             }
         }
 
@@ -169,23 +168,33 @@ public partial class MergedEpisodeFinder : Form
         rightClickMenu.Close();
     }
 
-    private void BwScan_DoWork(object sender, DoWorkEventArgs e)
+
+
+    private async void BtnRefresh_Click_1(object sender, EventArgs e)
     {
-        System.Threading.Thread.CurrentThread.Name ??= "MergedEpisode Scan Thread"; // Can only set it once
-        dupEps = MergedEpisodeFinderController.FindDoubleEps(mDoc, (BackgroundWorker)sender);
+        await ScanAsync();
     }
 
-    private void BwScan_ProgressChanged(object sender, ProgressChangedEventArgs e)
+    private async Task ScanAsync()
     {
-        pbProgress.SetProgress(e.ProgressPercentage);
-        lblStatus.Text = e.UserState?.ToString().ToUiVersion();
-    }
 
-    private void BwScan_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-    {
+        var progressHandler = new Progress<ProgressReport>(scanReport =>
+        {
+            // This body executes safely on the main thread
+            pbProgress.SetProgress(scanReport.ProgressPercentage);
+            lblStatus.Text = scanReport.UpdateText.ToUiVersion();
+        });
+
+        btnRefresh.Visible = false;
+        pbProgress.Visible = true;
+        lblStatus.Visible = true;
+
+        dupEps = await MergedEpisodeFinderController.FindDoubleEpsAsync(mDoc, progressHandler);
+
         btnRefresh.Visible = true;
         pbProgress.Visible = false;
         lblStatus.Visible = false;
+
         if (lvMergedEpisodes.IsDisposed)
         {
             return;
@@ -194,16 +203,8 @@ public partial class MergedEpisodeFinder : Form
         PopulateGrid();
     }
 
-    private void BtnRefresh_Click_1(object sender, EventArgs e)
+    internal async Task StartScanAsync()
     {
-        Scan();
-    }
-
-    private void Scan()
-    {
-        btnRefresh.Visible = false;
-        pbProgress.Visible = true;
-        lblStatus.Visible = true;
-        bwScan.RunWorkerAsync();
+        await ScanAsync();
     }
 }

@@ -6,7 +6,7 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using DaveChambers.FolderBrowserDialogEx;
 using System;
 using System.Linq;
@@ -38,17 +38,10 @@ public partial class BulkAddMovie : Form
     //For auto id
     private static readonly ThreadSafeCounter VolatileCounter = new();
 
-    public class ProgressReport
+    public class NewMovieProgressReport
     {
         public int NumberComplete { get; set; }
         public PossibleNewMovie? LatestItemProcessed { get; set; }
-    }
-
-    public class ScanProgressReport
-    {
-        public int ProgressPercentage { get; set; }
-        public string UpdateText { get; set; } = string.Empty;
-        public string LatestAction { get; set; } = string.Empty;
     }
 
     public BulkAddMovie(TVDoc doc, BulkAddMovieManager bam, UI mainUi)
@@ -247,7 +240,7 @@ public partial class BulkAddMovie : Form
         {
             //OK
         }
-        
+
         olvFMNewShows.UpdateObjects(engine.AddItems);
         olvFMNewShows.Update();
 
@@ -374,7 +367,7 @@ public partial class BulkAddMovie : Form
         pbProgress.Maximum = engine.AddItems.Count;
         lblStatusLabel.Text = "Identifying Movies...";
 
-        var progressHandler = new Progress<ProgressReport>(report =>
+        var progressHandler = new Progress<NewMovieProgressReport>(report =>
         {
             // This body executes safely on the main thread
             pbProgress.SetProgress(report.NumberComplete);
@@ -394,7 +387,7 @@ public partial class BulkAddMovie : Form
         VolatileCounter.Reset();
 
         try
-        { 
+        {
             await Parallel.ForEachAsync(
                 engine.AddItems,
                 options,
@@ -412,16 +405,16 @@ public partial class BulkAddMovie : Form
 
                     await movie.GuessMovieAsync(true);
 
-                    var report = new ProgressReport
+                    var report = new NewMovieProgressReport
                     {
                         NumberComplete = VolatileCounter.Increment(),
                         LatestItemProcessed = movie
                     };
 
-                    ((IProgress<ProgressReport>)progressHandler).Report(report);
+                    ((IProgress<NewMovieProgressReport>)progressHandler).Report(report);
                 }
                 );
-            }
+        }
         catch (OperationCanceledException)
         {
             //OK

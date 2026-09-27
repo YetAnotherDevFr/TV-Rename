@@ -6,7 +6,7 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -20,7 +20,7 @@ public class PossibleNewTvShow(DirectoryInfo directory, bool seasonFolders, stri
     internal int ProviderCode = -1;
 
     public virtual string FolderName => directory.FullName;
-    public virtual string Show => (CodeKnown ? CachedSeries?.Name  : RefinedHint) ?? string.Empty;
+    public virtual string Show => (CodeKnown ? CachedSeries?.Name : RefinedHint) ?? string.Empty;
     public virtual string Type => HasSeasonFoldersGuess ? "Folder per season" : "Flat";
     public virtual string SourceCode => CodeKnown ? ProviderCode.ToString() : string.Empty;
     public virtual int ImageTypeName => CodeKnown && !string.IsNullOrWhiteSpace(FolderName) ? 1 : 0;
@@ -42,9 +42,9 @@ public class PossibleNewTvShow(DirectoryInfo directory, bool seasonFolders, stri
         SourceProvider = source;
         ProviderCode = id;
 
-        NotifyPropertyChanged("Show");
-        NotifyPropertyChanged("SourceCode");
-        NotifyPropertyChanged("ImageTypeName");
+        NotifyPropertyChanged(nameof(Show));
+        NotifyPropertyChanged(nameof(SourceCode));
+        NotifyPropertyChanged(nameof(ImageTypeName));
     }
 
     public TVDoc.ProviderType Provider => SourceProvider;
@@ -75,6 +75,6 @@ public class PossibleNewTvShow(DirectoryInfo directory, bool seasonFolders, stri
 
     internal IEnumerable<FileInfo> FindFiles(string fileName)
     {
-        return directory.EnumerateFiles(fileName) ;
+        return directory.EnumerateFiles(fileName);
     }
 }

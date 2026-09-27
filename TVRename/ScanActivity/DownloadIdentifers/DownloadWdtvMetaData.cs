@@ -6,8 +6,9 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace TVRename;
 
@@ -36,7 +37,7 @@ internal class DownloadWdtvMetaData : DownloadIdentifier
         return theActionList;
     }
 
-    public override ItemList? ProcessShow(ShowConfiguration si, bool forceRefresh)
+    public override async Task<ItemList?> ProcessShowAsync(ShowConfiguration si, bool forceRefresh)
     {
         if (TVSettings.Instance.wdLiveTvMeta)
         {
@@ -55,7 +56,7 @@ internal class DownloadWdtvMetaData : DownloadIdentifier
             }
             return theActionList;
         }
-        return base.ProcessShow(si, forceRefresh);
+        return await base.ProcessShowAsync(si, forceRefresh);
     }
 
     public sealed override void Reset()

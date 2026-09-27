@@ -216,7 +216,7 @@ public static class StringExtensions
         return char.ToUpper(str[0]) + str.RemoveFirstCharacter().ToLower();
     }
 
-    public static bool IsNullOrWhitespace([NotNullWhen(false)]  this string? text) => string.IsNullOrWhiteSpace(text);
+    public static bool IsNullOrWhitespace([NotNullWhen(false)] this string? text) => string.IsNullOrWhiteSpace(text);
 
     public static string RemoveLastCharacter(this string instr)
     {
@@ -351,6 +351,7 @@ public static class StringExtensions
 
     public static string ToPsv(this IEnumerable<string?>? values) => values is null ? string.Empty : string.Join("|", values);
 
+    public static IEnumerable<string> FromScsv(this string? aggregate) => aggregate.FromSepValues(';');
     public static IEnumerable<string> FromPsv(this string? aggregate) => aggregate.FromSepValues('|');
     public static IEnumerable<string> FromCsv(this string? aggregate) => aggregate.FromSepValues(',');
     private static IEnumerable<string> FromSepValues(this string? aggregate, char delimiter)

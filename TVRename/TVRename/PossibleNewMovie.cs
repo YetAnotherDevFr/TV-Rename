@@ -1,4 +1,4 @@
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -165,7 +165,7 @@ public class PossibleNewMovie : ISeriesSpecifier, INotifyPropertyChanged
         }
         catch (SourceConnectivityException ex)
         {
-            Logger.Warn( $"Could not match the possible movie (SourceConnectivityException: {ex.Message}): {this}");
+            Logger.Warn($"Could not match the possible movie (SourceConnectivityException: {ex.Message}): {this}");
         }
         catch (SourceConsistencyException ex)
         {
@@ -221,7 +221,7 @@ public class PossibleNewMovie : ISeriesSpecifier, INotifyPropertyChanged
         }
         catch (RegexMatchTimeoutException ex)
         {
-            Logger.Warn(ex,$"Could not parse hints for new movie");
+            Logger.Warn(ex, $"Could not parse hints for new movie");
         }
         return null;
     }
@@ -254,7 +254,7 @@ public class PossibleNewMovie : ISeriesSpecifier, INotifyPropertyChanged
             try
             {
                 IEnumerable<FileInfo> files = [.. Directory.EnumerateFiles(fileName)];
-                if (files.Any())
+                if (files.IsAny())
                 {
                     foreach (string x in files.Select(info => FindShowCode(info, simpleIdCode, uniqueIdCode)).ValidStrings())
                     {
@@ -370,10 +370,10 @@ public class PossibleNewMovie : ISeriesSpecifier, INotifyPropertyChanged
         SourceProvider = source;
         ProviderCode = id;
 
-        NotifyPropertyChanged("Movie");
-        NotifyPropertyChanged("Year");
-        NotifyPropertyChanged("SourceCode");
-        NotifyPropertyChanged("ImageTypeName");
+        NotifyPropertyChanged(nameof(Movie));
+        NotifyPropertyChanged(nameof(Year));
+        NotifyPropertyChanged(nameof(SourceCode));
+        NotifyPropertyChanged(nameof(ImageTypeName));
     }
 
     public bool Matches(PossibleNewMovie ai) => movieStub.Equals(ai.movieStub, StringComparison.CurrentCultureIgnoreCase);

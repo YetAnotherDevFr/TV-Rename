@@ -1,7 +1,6 @@
 using BrightIdeasSoftware;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
@@ -36,10 +35,25 @@ public partial class SettingsReview : Form
         rightClickMenu.Close();
     }
 
-    private void BwScan_DoWork(object sender, DoWorkEventArgs e)
+    private void BtnRefresh_Click_1(object sender, EventArgs e)
     {
-        Thread.CurrentThread.Name ??= "SettingsReview Scan Thread"; // Can only set it once
-        BackgroundWorker bw = (BackgroundWorker)sender;
+        Scan();
+    }
+
+    private void Scan()
+    {
+        btnRefresh.Visible = false;
+        pbProgress.Visible = true;
+        lblStatus.Visible = true;
+        UiHelpers.SetProgressStateNormal(mainUi.Handle);
+
+        var progressHandler = new Progress<ProgressReport>(scanReport =>
+        {
+            // This body executes safely on the main thread
+            pbProgress.SetProgress(scanReport.ProgressPercentage);
+            lblStatus.Text = scanReport.UpdateText.ToUiVersion();
+        });
+
         int total = mDoc.FilmLibrary.Movies.Count() + mDoc.TvLibrary.Shows.Count();
         ThreadSafeCounter currentRecord = new();
 
@@ -66,7 +80,11 @@ public partial class SettingsReview : Form
             set.Add(new FolderBaseMovieCheck(movie, mDoc));
             set.Add(new MovieFolderTypeCheck(movie, mDoc));
 
-            bw.ReportProgress(100 * currentRecord.Increment() / total, movie.ShowName);
+            ((IProgress<ProgressReport>)progressHandler).Report(new ProgressReport()
+            {
+                ProgressPercentage = 100 * currentRecord.Increment() / total,
+                UpdateText = movie.ShowName
+            });
         }
 
         foreach (ShowConfiguration show in mDoc.TvLibrary.GetSortedShows())
@@ -96,20 +114,13 @@ public partial class SettingsReview : Form
             set.Add(new FolderBaseLibraryDefaultTvCheck(show, mDoc));
             set.Add(new TvShowSubdiretoryFormatCheck(show, mDoc));
 
-            bw.ReportProgress(100 * currentRecord.Increment() / total, show.ShowName);
+            ((IProgress<ProgressReport>)progressHandler).Report(new ProgressReport()
+            {
+                ProgressPercentage = 100 * currentRecord.Increment() / total,
+                UpdateText = show.ShowName
+            });
         }
-    }
 
-    private void BwScan_ProgressChanged(object sender, ProgressChangedEventArgs e)
-    {
-        pbProgress.SetProgress(e.ProgressPercentage);
-        lblStatus.Text = e.UserState?.ToString()?.ToUiVersion();
-
-        UiHelpers.SetProgress(e.ProgressPercentage.Between(0, 100), mainUi.Handle);
-    }
-
-    private void BwScan_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-    {
         UiHelpers.SetProgressStateNone(mainUi.Handle);
         btnRefresh.Visible = true;
         pbProgress.Visible = false;
@@ -122,21 +133,7 @@ public partial class SettingsReview : Form
         UpdateUI();
     }
 
-    private void BtnRefresh_Click_1(object sender, EventArgs e)
-    {
-        Scan();
-    }
-
-    private void Scan()
-    {
-        btnRefresh.Visible = false;
-        pbProgress.Visible = true;
-        lblStatus.Visible = true;
-        UiHelpers.SetProgressStateNormal(mainUi.Handle);
-        bwScan.RunWorkerAsync();
-    }
-
-    private void olvDuplicates_CellRightClick(object sender, CellRightClickEventArgs e)
+    private async void olvDuplicates_CellRightClick(object sender, CellRightClickEventArgs e)
     {
         if (e.Model is null)
         {
@@ -157,7 +154,7 @@ public partial class SettingsReview : Form
                 rightClickMenu.Add("Edit Movie", async (_, _) => await mainUi.EditMovieAsync(si));
 
                 rightClickMenu.AddSeparator();
-                foreach (string? f in si.Locations)
+                foreach (string? f in await si.LocationsAsync())
                 {
                     rightClickMenu.Add("Visit " + f, (_, _) => f.OpenFolder());
                 }
@@ -166,7 +163,7 @@ public partial class SettingsReview : Form
             {
                 ShowConfiguration si = tcheck.Show;
                 rightClickMenu.Add("Force Refresh",
-                    async (_, _) => await mainUi.ForceRefreshAsync([si], false));
+                    async (_, _) => await mainUi.ForceRefreshAsync([si], false, new CancellationTokenSource()));
 
                 rightClickMenu.Add("Edit TV Show", async (_, _) => await mainUi.EditShowAsync(si));
             }
@@ -186,7 +183,8 @@ public partial class SettingsReview : Form
 
     private void Remedy(IEnumerable<SettingsCheck> selectedItems)
     {
-        FixIssuesNotifier form = new(new RemedySettings(selectedItems, this));
+        CancellationTokenSource cts = new();
+        FixIssuesNotifier form = new(new RemedySettings(selectedItems, this), cts);
         form.ShowDialog();
     }
 

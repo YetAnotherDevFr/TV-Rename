@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -8,11 +7,11 @@ namespace TVRename.Forms.Tools;
 
 public partial class TaskNotifier : Form
 {
-    private Task? task;
+    protected Task? task;
     private readonly string name;
     private readonly CancellationTokenSource cancellationToken;
 
-    public TaskNotifier( string name, CancellationTokenSource cancellationToken)
+    public TaskNotifier(string name, CancellationTokenSource cancellationToken)
     {
         this.name = name;
         this.cancellationToken = cancellationToken;
@@ -34,7 +33,7 @@ public partial class TaskNotifier : Form
             lblLastUpdate.Text = progress.lastUpdate.ToUiVersion() ?? string.Empty;
     }
 
-    private void btnCancel_Click(object sender, EventArgs e)
+    private void BtnCancel_Click(object sender, EventArgs e)
     {
         cancellationToken.Cancel();
         Close();
@@ -76,7 +75,7 @@ public class TaskCompletionProgress(Action<TaskProgress> handler) : Progress<Tas
     protected override void OnReport(TaskProgress progress)
     {
         int percent = (int)((double)progress.percent / maxProgress * 100);
-        base.OnReport(new TaskProgress (percent, progress.message, progress.lastUpdate));
+        base.OnReport(new TaskProgress(percent, progress.message, progress.lastUpdate));
     }
 
 }

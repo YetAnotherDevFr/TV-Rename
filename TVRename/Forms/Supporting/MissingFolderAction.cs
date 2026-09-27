@@ -5,7 +5,7 @@
 //
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
-using Alphaleonis.Win32.Filesystem;
+
 using System.Windows.Forms;
 using TVRename.Forms;
 
@@ -67,7 +67,7 @@ public partial class MissingFolderAction : Form
     private void bnBrowse_Click(object sender, System.EventArgs e)
     {
         folderBrowser.SelectedPath = FolderName;
-        if (UiHelpers.ShowDialogAndOk(folderBrowser,this))
+        if (UiHelpers.ShowDialogAndOk(folderBrowser, this))
         {
             Outcome = FaResult.kfaDifferentFolder;
             FolderName = folderBrowser.SelectedPath;

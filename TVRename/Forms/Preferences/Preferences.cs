@@ -5,7 +5,7 @@
 //
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
-using Alphaleonis.Win32.Filesystem;
+
 using DaveChambers.FolderBrowserDialogEx;
 using Humanizer;
 using System;
@@ -1619,7 +1619,7 @@ public partial class Preferences : Form
         try
         {
             TVSettings.ColouringRule? ssct = (TVSettings.ColouringRule)cboShowStatus.SelectedItem;
-            
+
             if (ColorTranslator.FromHtml(txtShowStatusColor.Text).IsEmpty ||
                 ssct is null)
             {
@@ -1807,7 +1807,7 @@ public partial class Preferences : Form
 
         Graphics g = e.Graphics;
 
-        using SolidBrush backColor = new (tcTabs.BackColor);
+        using SolidBrush backColor = new(tcTabs.BackColor);
         g.FillRectangle(e.State == DrawItemState.Selected ? Brushes.White : backColor, e.Bounds);
 
         // Get the item from the collection.
@@ -1822,7 +1822,7 @@ public partial class Preferences : Form
         stringFlags.Alignment = StringAlignment.Near;
         stringFlags.LineAlignment = StringAlignment.Center;
 
-        using SolidBrush fore = new (tcTabs.ForeColor);
+        using SolidBrush fore = new(tcTabs.ForeColor);
         g.DrawString(tabPage.Text, tcTabs.Font, fore, tabBounds, stringFlags);
     }
 
@@ -1912,21 +1912,21 @@ public partial class Preferences : Form
         {
             string[]? files = (string[]?)e.Data.GetData(DataFormats.FileDrop);
             if (files is not null)
-            foreach (string path in files)
-            {
-                try
+                foreach (string path in files)
                 {
-                    DirectoryInfo di = new(path);
-                    if (di.Exists)
+                    try
                     {
-                        TVSettings.Instance.DownloadFolders.Add(path.ToLower().Trim());
+                        DirectoryInfo di = new(path);
+                        if (di.Exists)
+                        {
+                            TVSettings.Instance.DownloadFolders.Add(path.ToLower().Trim());
+                        }
+                    }
+                    catch
+                    {
+                        // ignored
                     }
                 }
-                catch
-                {
-                    // ignored
-                }
-            }
         }
 
         mDoc.SetDirty();
@@ -2060,21 +2060,21 @@ public partial class Preferences : Form
         {
             string[]? files = (string[]?)e.Data.GetData(DataFormats.FileDrop);
             if (files != null)
-            foreach (string path in files)
-            {
-                try
+                foreach (string path in files)
                 {
-                    DirectoryInfo di = new(path);
-                    if (di.Exists)
+                    try
                     {
-                        TVSettings.Instance.LibraryFolders.Add(path.ToLower());
+                        DirectoryInfo di = new(path);
+                        if (di.Exists)
+                        {
+                            TVSettings.Instance.LibraryFolders.Add(path.ToLower());
+                        }
+                    }
+                    catch
+                    {
+                        // ignored
                     }
                 }
-                catch
-                {
-                    // ignored
-                }
-            }
         }
 
         mDoc.SetDirty();
@@ -2122,7 +2122,7 @@ public partial class Preferences : Form
     private void pbScanOptions_Click(object sender, EventArgs e) => OpenInfoWindow("/#the-general-tab");
     private static void OpenInfoWindow(string page)
     {
-        $"https://www.tvrename.com/manual/options{page}".OpenUrlInBrowser();
+        $"http://www.tvrename.com/manual/options{page}".OpenUrlInBrowser();
     }
 
     #endregion HelpWindows

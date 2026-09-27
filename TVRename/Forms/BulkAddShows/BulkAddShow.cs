@@ -6,7 +6,7 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using DaveChambers.FolderBrowserDialogEx;
 using System;
 using System.Linq;
@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using TVRename.Forms;
-using static TVRename.BulkAddMovie;
 
 namespace TVRename;
 
@@ -500,7 +499,7 @@ public partial class BulkAddShow : Form
 
     private bool NothingSelected()
     {
-        return ! olFMNewShows.AnySelected();
+        return !olFMNewShows.AnySelected();
     }
 
     private void UpdateListItem(PossibleNewTvShow ai, bool makevis)
@@ -515,7 +514,7 @@ public partial class BulkAddShow : Form
 
     private async void bnFolderMonitorDone_Click(object sender, System.EventArgs e)
     {
-        if (engine.AddItems.Any())
+        if (engine.AddItems.IsAny())
         {
             DialogResult res = MessageBox.Show("Add identified shows to \"TV Shows\"?", "Bulk Add TV Shows", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (res != DialogResult.Yes)

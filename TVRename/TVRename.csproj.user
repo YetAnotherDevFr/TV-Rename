@@ -1,25 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <PublishUrlHistory>publish\</PublishUrlHistory>
-    <InstallUrlHistory />
-    <SupportUrlHistory />
-    <UpdateUrlHistory />
-    <BootstrapperUrlHistory />
-    <ErrorReportUrlHistory />
-    <FallbackCulture>en-US</FallbackCulture>
-    <VerifyUploadedFiles>false</VerifyUploadedFiles>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartArguments>
-    </StartArguments>
-  </PropertyGroup>
+  <PropertyGroup />
   <ItemGroup>
+    <Compile Update="Custom Controls\CodeFinder.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="Custom Controls\FastObjectListViewFlickerFree.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Update="Custom Controls\ListViewFlickerFree.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="Custom Controls\MovieCodeFinder.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="Custom Controls\ObjectListViewFlickerFree.cs">
       <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="Custom Controls\TvCodeFinder.cs">
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="Forms\BulkAddMovies\BulkAddEditMovie.cs">
       <SubType>Form</SubType>
@@ -129,9 +128,6 @@
     <Compile Update="Forms\Tools\MergedEpisodeFinder.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\Tools\Notifier.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Update="Forms\Tools\OrphanFiles.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -148,6 +144,15 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Forms\Tools\ShowSummary.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Tools\TaskNotifier.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Tools\YTSRecomendations\YtsRecommendationView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Tools\YTSRecomendations\YtsViewerView.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Forms\UI.cs">
@@ -180,49 +185,5 @@
     <Compile Update="Forms\Utilities\ThanksForm.cs">
       <SubType>Form</SubType>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="Custom Controls\CodeFinder.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\BulkAddMovies\BulkAddEditMovie.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\BulkAddMovies\BulkAddMovie.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\BulkAddShows\BulkAddEditShow.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\BulkAddShows\BulkAddShow.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\Preferences\AddEditSearchEngine.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\Preferences\AddEditSeasEpFinders.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\Supporting\CopyMoveProgress.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\Supporting\Filters.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\Tools\OrphanFiles.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\Tools\ShowSummary.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\Tools\YTSRecomendations\YtsViewerView.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Forms\UI.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
   </ItemGroup>
 </Project>

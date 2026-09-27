@@ -1,8 +1,7 @@
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using TVRename.Forms;
@@ -99,7 +98,7 @@ internal class ActionNfoEpisode : ActionNfo
         if (!string.IsNullOrEmpty(epDirector))
         {
             IEnumerable<string> dirs = [.. epDirector.FromPsv()];
-            if (dirs.Any())
+            if (dirs.IsAny())
             {
                 root.ReplaceElements("director", dirs);
             }
@@ -110,7 +109,7 @@ internal class ActionNfoEpisode : ActionNfo
         if (!string.IsNullOrEmpty(epWriter))
         {
             string[] writers = [.. epWriter.FromPsv()];
-            if (writers.Any())
+            if (writers.IsAny())
             {
                 root.ReplaceElements("credits", writers);
             }

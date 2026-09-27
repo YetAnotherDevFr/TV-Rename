@@ -1,4 +1,4 @@
-using Alphaleonis.Win32.Filesystem;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -126,12 +126,12 @@ public partial class QuickRename : Form, IDialogParent
         {
             if (TVSettings.Instance.AutoAddAsPartOfQuickRename)
             {
-                IEnumerable<MediaConfiguration> addedShows = (await FinderHelper.FindMediaAsync([droppedFile], mDoc, owner)).Select(x=>x.Configuration);
+                IEnumerable<MediaConfiguration> addedShows = (await FinderHelper.FindMediaAsync([droppedFile], mDoc, owner)).Select(x => x.Configuration);
                 bestShow = addedShows.OfType<ShowConfiguration>().FirstOrDefault();
 
                 if (bestShow != null && !mDoc.AlreadyContains(bestShow))
                 {
-                    mDoc.Add(bestShow.AsList(), true);
+                    await mDoc.AddAsync(bestShow.AsList(), true);
                     await mDoc.TvAddedOrEditedAsync(true, false, false, parent, bestShow);
 
                     Logger.Info($"Added new show called: {bestShow.ShowName}");

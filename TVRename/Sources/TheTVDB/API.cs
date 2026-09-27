@@ -1,16 +1,8 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using Humanizer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NLog;
+using System.Globalization;
+
 
 namespace TVRename.TheTVDB;
 
@@ -109,14 +101,14 @@ public static class API
         try
         {
             //open file stream
-            using StreamWriter file = File.CreateText(auditLogFile);
+            using System.IO.StreamWriter file = File.CreateText(auditLogFile);
             JsonSerializer serializer = new();
             //serialize object directly into file stream
             serializer.Serialize(file, response);
         }
         catch (Exception e)
         {
-            Logger.Error($"Failed to save {response} to {auditLogFile}",e);
+            Logger.Error($"Failed to save {response} to {auditLogFile}", e);
         }
     }
 
@@ -198,7 +190,7 @@ public static class API
         {
             await Parallel.ForEachAsync(episodeData,
                 new ParallelOptions { MaxDegreeOfParallelism = 3 },
-                async (x,token) =>
+                async (x, token) =>
                 {
                     int? epNumber = x["number"]?.ToObject<int>();
                     Thread.CurrentThread.Name ??=
@@ -273,7 +265,7 @@ public static class API
             List<(int? id, JToken jsonData)> neededEpisodes =
                 [.. availableEpisodes.Where(x => x.id.HasValue && si.Episodes.All(e => e.EpisodeId != x.id))];
 
-            if (!neededEpisodes.Any())
+            if (!neededEpisodes.IsAny())
             {
                 return;
             }
@@ -281,7 +273,7 @@ public static class API
             //todo set parallel cancellation source
             await Parallel.ForEachAsync(neededEpisodes,
                 new ParallelOptions { MaxDegreeOfParallelism = TVSettings.Instance.ParallelDownloads }
-                ,async  (x,token) =>
+                , async (x, token) =>
                 {
                     int? epNumber = x.jsonData["number"]?.ToObject<int>();
                     Thread.CurrentThread.Name ??=
@@ -392,7 +384,7 @@ public static class API
             JObject jsonUpdateResponse = await TvdbWebApi.GetUpdatesAsync(fromEpochTime, pageNumber)
                                          ?? throw new SourceConsistencyException("Could not get updates from TVDB", TVDoc.ProviderType.TheTVDB);
 
-            int numberOfResponses = GetNumResponses(jsonUpdateResponse, fromEpochTime.GetRequestedTime(),showConnectionIssues) ?? throw new SourceConsistencyException($"NumberOfResponses is null: {fromEpochTime}:{pageNumber}:{jsonUpdateResponse}", TVDoc.ProviderType.TheTVDB);
+            int numberOfResponses = GetNumResponses(jsonUpdateResponse, fromEpochTime.GetRequestedTime(), showConnectionIssues) ?? throw new SourceConsistencyException($"NumberOfResponses is null: {fromEpochTime}:{pageNumber}:{jsonUpdateResponse}", TVDoc.ProviderType.TheTVDB);
 
             updatesResponses.Add(jsonUpdateResponse);
             pageNumber++;
@@ -417,13 +409,13 @@ public static class API
         await Parallel.ForEachAsync
             (updatesResponses,
             new ParallelOptions { MaxDegreeOfParallelism = TVSettings.Instance.ParallelDownloads },
-            async (o,token) =>
+            async (o, token) =>
                 {
                     Thread.CurrentThread.Name ??= "Recent Updates"; // Can only set it once
                     result.AddRange(ProcessUpdate(o));
                 });
 
-        if (auditUpdates && updatesResponses.Any())
+        if (auditUpdates && updatesResponses.IsAny())
         {
             int n = 0;
             foreach (JObject response in updatesResponses)
@@ -449,12 +441,12 @@ public static class API
         }
         catch (InvalidCastException ex)
         {
-            Logger.Error(ex,"Did not receive the expected format of json from lastupdated query.");
+            Logger.Error(ex, "Did not receive the expected format of json from lastupdated query.");
             Logger.Error(jToken.ToString());
         }
         catch (OverflowException ex)
         {
-            Logger.Error(ex,"Could not parse the json from lastupdated query.");
+            Logger.Error(ex, "Could not parse the json from lastupdated query.");
             Logger.Error(jToken.ToString());
         }
 
@@ -472,19 +464,19 @@ public static class API
             case "series":
             case "translatedseries":
             case "seriespeople":
-            {
-                return new UpdateRecord(UpdateRecord.UpdateType.series, id, time);
+                {
+                    return new UpdateRecord(UpdateRecord.UpdateType.series, id, time);
                 }
             case "movies":
             case "translatedmovies":
             case "movie-genres":
                 {
-                    return new UpdateRecord(UpdateRecord.UpdateType.movie , id, time);
+                    return new UpdateRecord(UpdateRecord.UpdateType.movie, id, time);
                 }
             case "episodes":
             case "translatedepisodes":
                 {
-                    return new UpdateRecord(UpdateRecord.UpdateType.episode , id, time);
+                    return new UpdateRecord(UpdateRecord.UpdateType.episode, id, time);
                 }
             case "seasons":
             case "translatedseasons":
@@ -522,7 +514,7 @@ public static class API
         }
         return null;
     }
-   
+
     public static string WebsiteShowUrl(ShowConfiguration si)
     {
         string? value = si.CachedShow?.Slug;
@@ -1269,7 +1261,7 @@ public static class API
         }
 
         List<JToken> languageNodes = [.. aliasNode.Where(x => x["language"]?.ToString() == lang.TVDBCode())];
-        if (languageNodes.Any())
+        if (languageNodes.IsAny())
         {
             foreach (JToken? x in languageNodes)
             {
@@ -1279,7 +1271,7 @@ public static class API
         }
 
         languageNodes = [.. aliasNode.Where(x => x["language"]?.ToString() == TVSettings.Instance.PreferredTVDBLanguage.TVDBCode())];
-        if (languageNodes.Any())
+        if (languageNodes.IsAny())
         {
             foreach (JToken? x in languageNodes)
             {
@@ -1540,7 +1532,7 @@ public static class API
 
         if (jsonSearchResponse != null)
         {
-            ProcessSearchResult(result,jsonSearchResponse, locale);
+            ProcessSearchResult(result, jsonSearchResponse, locale);
         }
 
         Locale defaultLocale = new(TVSettings.Instance.PreferredTVDBLanguage);
@@ -1555,7 +1547,7 @@ public static class API
         JObject? jsonSearchDefaultLangResponse = await TvdbWebApi.SearchResponseAsync(text, type, defaultLocale.LanguageToUse(TVDoc.ProviderType.TheTVDB));
         if (jsonSearchDefaultLangResponse != null)
         {
-            ProcessSearchResult(result, jsonSearchDefaultLangResponse,defaultLocale);
+            ProcessSearchResult(result, jsonSearchDefaultLangResponse, defaultLocale);
         }
 
         return result;

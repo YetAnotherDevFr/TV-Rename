@@ -6,7 +6,7 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -101,7 +101,7 @@ public abstract class ActionNfo : ActionWriteMetadata
             return;
         }
 
-        if (!e.Elements(elementName).Any())
+        if (!e.Elements(elementName).IsAny())
         {
             e.Add(new XElement(elementName, value));
             return;
@@ -118,7 +118,7 @@ public abstract class ActionNfo : ActionWriteMetadata
 
     protected static void UpdateRatings(XElement root, string rating, int votes)
     {
-        if (!rating.HasValue() ||  rating == "0" || votes == 0)
+        if (!rating.HasValue() || rating == "0" || votes == 0)
         {
             return;
         }
@@ -147,7 +147,7 @@ public abstract class ActionNfo : ActionWriteMetadata
             .Where(node => node.Name == NODE_NAME && node.HasAttribute(NODE_ATTRIBUTE_TYPE, idType));
 
         IEnumerable<XElement> xElements = [.. appropriateNodes];
-        bool needToUpdate = xElements.Any();
+        bool needToUpdate = xElements.IsAny();
 
         if (needToUpdate)
         {
@@ -163,7 +163,7 @@ public abstract class ActionNfo : ActionWriteMetadata
     protected static void ReplaceActors(XElement root, IEnumerable<Actor> selectedShowActors)
     {
         IEnumerable<Actor> showActors = selectedShowActors as Actor[] ?? [.. selectedShowActors];
-        if (!showActors.ToList().Any())
+        if (!showActors.ToList().IsAny())
         {
             return;
         }
@@ -202,7 +202,7 @@ public abstract class ActionNfo : ActionWriteMetadata
     {
         {
             List<MediaImage> newImages = [.. images];
-            if (!newImages.Any())
+            if (!newImages.IsAny())
             {
                 return;
             }
@@ -232,7 +232,7 @@ public abstract class ActionNfo : ActionWriteMetadata
     {
         {
             List<MediaImage> newImages = [.. images];
-            if (!newImages.Any())
+            if (!newImages.IsAny())
             {
                 return;
             }

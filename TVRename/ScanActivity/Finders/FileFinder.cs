@@ -6,10 +6,11 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TVRename;
@@ -90,7 +91,7 @@ internal abstract class FileFinder(TVDoc doc, TVDoc.ScanSettings settings) : Fin
         return false;
     }
 
-    protected bool ReviewFile(MovieItemMissing me, ItemList addTo, FileInfo dce, bool preventMove, bool doExtraFiles, bool useFullPath)
+    protected async Task<bool> ReviewFileAsync(MovieItemMissing me, ItemList addTo, FileInfo dce, bool preventMove, bool doExtraFiles, bool useFullPath)
     {
         if (Settings.Token.IsCancellationRequested)
         {
@@ -142,7 +143,7 @@ internal abstract class FileFinder(TVDoc doc, TVDoc.ScanSettings settings) : Fin
                 DownloadIdentifiersController di = new();
 
                 // if we're copying/moving a file across, we might also want to make a thumbnail or NFO for it
-                addTo.Add(di.ProcessMovie(me.MovieConfig, fi));
+                addTo.Add(await di.ProcessMovieAsync(me.MovieConfig, fi));
             }
 
             return true;
@@ -416,6 +417,12 @@ internal abstract class FileFinder(TVDoc doc, TVDoc.ScanSettings settings) : Fin
                 : action.From.Directory.GetFiles(basename + ".*");
             foreach (FileInfo fi in flist)
             {
+                //the main file willbe in the list too, we are already copying it
+                if (fi == action.From)
+                {
+                    continue;
+                }
+
                 //check to see whether the file is one of the types we do/don't want to include
                 //If we are copying from outside the library we use the 'Keep Together' Logic
                 if (!fromLibrary && !TVSettings.Instance.KeepTogetherFilesWithType(fi.Extension))
@@ -429,7 +436,7 @@ internal abstract class FileFinder(TVDoc doc, TVDoc.ScanSettings settings) : Fin
                     continue;
                 }
 
-                string newName = GetFilename(fi.Name, basename, toname);
+                string newName = GetFilename(fi, basename, toname);
 
                 ActionCopyMoveRename newitem = action.Episode is null ?
                     new ActionCopyMoveRename(action.Operation, fi,
@@ -475,12 +482,34 @@ internal abstract class FileFinder(TVDoc doc, TVDoc.ScanSettings settings) : Fin
         }
     }
 
-    private static string GetFilename(string filename, string basename, string toname)
+    private static string GetFilename(FileInfo sourceFile, string basename, string toname)
     {
-        // do case insensitive replace
-        int p = filename.IndexOf(basename, StringComparison.OrdinalIgnoreCase);
+        string newName = string.Empty;
 
-        string newName = filename.Take(p) + toname + filename.RemoveFirst(p + basename.Length);
+        (bool isLangSpecifc, string extension) = FileHelper.IsLanguageSpecificSubtitle(sourceFile);
+
+        if (isLangSpecifc)
+        {
+            // do case insensitive replace
+            int p = sourceFile.Name.IndexOf(basename, StringComparison.OrdinalIgnoreCase);
+
+            // Just replace the main section and leave any remainder
+            newName = sourceFile.Name.Take(p) + toname + sourceFile.Name.RemoveFirst(p + basename.Length);
+        }
+        else if (sourceFile.Name.StartsWith(basename))
+        {
+            newName = toname + sourceFile.Extension;
+        }
+        else
+        {
+            //old logic
+            // do case insensitive replace
+            int p = sourceFile.Name.IndexOf(basename, StringComparison.OrdinalIgnoreCase);
+
+            // Just replace the main section and leave any remainder
+            newName = sourceFile.Name.Take(p) + toname + sourceFile.Name.RemoveFirst(p + basename.Length);
+        }
+
         if (TVSettings.Instance.RenameTxtToSub && newName.EndsWith(".txt", StringComparison.Ordinal))
         {
             return newName.RemoveLast(4) + ".sub";

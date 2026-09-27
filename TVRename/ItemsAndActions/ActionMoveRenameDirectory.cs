@@ -1,4 +1,4 @@
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Linq;
 using System.Threading;
@@ -64,7 +64,7 @@ public class ActionMoveRenameDirectory : ActionFileOperation
         DirectoryInfo source = new(sourceFolder);
         DirectoryInfo target = new(targetFolder);
 
-        if (target.Exists && source.Exists && !target.EnumerateFiles().Any())
+        if (target.Exists && source.Exists && !target.EnumerateFiles().IsAny())
         {
             try
             {

@@ -6,12 +6,11 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
@@ -283,10 +282,7 @@ public sealed class TVSettings
 
     private IEnumerable<string> OtherExtensionsArray => Convert(OtherExtensionsString);
 
-    private static string[] Convert(string? propertyString)
-    {
-        return string.IsNullOrWhiteSpace(propertyString) ? [] : propertyString.Split(';');
-    }
+    private static string[] Convert(string? propertyString) => propertyString.FromScsv().ToArray();
 
     internal bool IncludeBetaUpdates() => mode == BetaMode.BetaToo;
 
@@ -902,7 +898,7 @@ public sealed class TVSettings
             return true;
         }
 
-        string[] t = s.Split(';');
+        var t = s.FromScsv();
         foreach (string s2 in t)
         {
             if (string.IsNullOrEmpty(s2) || !s2.StartsWith('.') || s2.ContainsAnyCharactersFrom(CompulsoryReplacements()) || s2.ContainsAnyCharactersFrom(Path.GetInvalidFileNameChars()))
@@ -921,7 +917,7 @@ public sealed class TVSettings
             return true;
         }
 
-        string[] t = s.Split(';');
+        var t = s.FromScsv();
         foreach (string s2 in t)
         {
             if (string.IsNullOrEmpty(s2) || s2.ContainsAnyCharactersFrom(CompulsoryReplacements()) || s2.ContainsAnyCharactersFrom(Path.GetInvalidFileNameChars()))

@@ -1,4 +1,4 @@
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,10 +43,10 @@ internal class ManualFoldersMovieCheck(MovieConfiguration movie, TVDoc doc) : Cu
                         return;
                     }
 
-                    if (!source.EnumerateFiles().Any() && !source.EnumerateDirectories().Any())
+                    if (!source.EnumerateFiles().IsAny() && !source.EnumerateDirectories().IsAny())
                     {
                         //directory has nothing in it
-                        FileHelper.RemoveDirectory(source,null);
+                        FileHelper.RemoveDirectory(source, null);
                         Movie.UseManualLocations = false;
                         Movie.UseAutomaticFolders = true;
                         return;

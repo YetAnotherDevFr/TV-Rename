@@ -25,6 +25,19 @@ public static class EnumerableExtensions
         }
     }
 
+    public static bool IsAny<T>(this IEnumerable<T> source)
+    {
+        if (source is null)
+        {
+            return false;
+        }
+        if (source is List<T> list)
+        {
+            return list.Count > 0;
+        }
+        return source.Any();
+    }
+
     public static void AddNullableRange<T>(this List<T> source, IEnumerable<T>? items)
     {
         if (items != null)
@@ -66,25 +79,25 @@ public static class EnumerableExtensions
     public static int MaxOrDefault<T>(this IEnumerable<T> enumeration, Func<T, int> selector, int defaultValue)
     {
         IEnumerable<T> enumerable = [.. enumeration];
-        return enumerable.Any() ? enumerable.Max(selector) : defaultValue;
+        return enumerable.IsAny() ? enumerable.Max(selector) : defaultValue;
     }
 
     public static int MinOrDefault<T>(this IEnumerable<T> enumeration, Func<T, int> selector, int defaultValue)
     {
         IEnumerable<T> enumerable = [.. enumeration];
-        return enumerable.Any() ? enumerable.Min(selector) : defaultValue;
+        return enumerable.IsAny() ? enumerable.Min(selector) : defaultValue;
     }
 
     public static TProp? MinOrNull<TItem, TProp>(this IEnumerable<TItem> @this, Func<TItem, TProp> selector) where TProp : struct
     {
         IEnumerable<TItem> list = [.. @this];
 
-        return list.Any() ? list.Min(selector) : null;
+        return list.IsAny() ? list.Min(selector) : null;
     }
     public static TProp? MaxOrNull<TItem, TProp>(this IEnumerable<TItem> @this, Func<TItem, TProp> selector) where TProp : struct
     {
         IEnumerable<TItem> list = [.. @this];
-        return list.Any() ? list.Max(selector) : null;
+        return list.IsAny() ? list.Max(selector) : null;
     }
 
     //

@@ -9,6 +9,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Threading.Tasks;
 using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
 
 namespace TVRename;
@@ -30,7 +31,7 @@ internal class DownloadKodiMetaData : DownloadIdentifier
         base.NotifyComplete(file);
     }
 
-    public override ItemList? ProcessShow(ShowConfiguration si, bool forceRefresh)
+    public override async Task<ItemList?> ProcessShowAsync(ShowConfiguration si, bool forceRefresh)
     {
         // for each tv show, optionally write a tvshow.nfo file
         if (TVSettings.Instance.NFOShows)
@@ -56,7 +57,7 @@ internal class DownloadKodiMetaData : DownloadIdentifier
                 LOGGER.Warn(ex, "Failed to find file size to look for NFO Files");
             }
         }
-        return base.ProcessShow(si, forceRefresh);
+        return await base.ProcessShowAsync(si, forceRefresh);
     }
 
     public override ItemList? ProcessEpisode(ProcessedEpisode episode, FileInfo file, bool forceRefresh)
@@ -69,19 +70,19 @@ internal class DownloadKodiMetaData : DownloadIdentifier
         try
         {
             FileInfo nfo = FileHelper.FileInFolder(file.Directory, file.RemoveExtension() + ".nfo");
-             if (nfo.Exists && System.Math.Abs(episode.SrvLastUpdated - TimeZoneHelper.Epoch(nfo.LastWriteTime)) < 1 && !forceRefresh)
-             {
-                 return null;
-             }
+            if (nfo.Exists && System.Math.Abs(episode.SrvLastUpdated - TimeZoneHelper.Epoch(nfo.LastWriteTime)) < 1 && !forceRefresh)
+            {
+                return null;
+            }
 
-             //If we do not already have plans to put the file into place
-             if (DoneNfo.Contains(nfo.FullName))
-             {
-                 return null;
-             }
+            //If we do not already have plans to put the file into place
+            if (DoneNfo.Contains(nfo.FullName))
+            {
+                return null;
+            }
 
-             DoneNfo.Add(nfo.FullName);
-             return [new ActionNfoEpisode(nfo, episode)];
+            DoneNfo.Add(nfo.FullName);
+            return [new ActionNfoEpisode(nfo, episode)];
         }
         catch (DirectoryNotFoundException ex)
         {
@@ -94,7 +95,7 @@ internal class DownloadKodiMetaData : DownloadIdentifier
         return null;
     }
 
-    public override ItemList? ProcessMovie(MovieConfiguration mc, FileInfo file, bool forceRefresh)
+    public override async Task<ItemList?> ProcessMovieAsync(MovieConfiguration mc, FileInfo file, bool forceRefresh)
     {
         if (!TVSettings.Instance.NFOMovies || mc.CachedMovie is null)
         {

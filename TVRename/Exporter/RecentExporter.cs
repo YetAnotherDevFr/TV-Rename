@@ -6,10 +6,11 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace TVRename;
 
@@ -24,7 +25,7 @@ internal abstract class RecentExporter(TVDoc doc) : Exporter
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="System.IO.IOException"></exception>
     /// <exception cref="System.IO.PathTooLongException">The specified path, file name, or both exceed the system-defined maximum length.</exception>
-    protected override void Do()
+    protected async override Task DoAsync()
     {
         IEnumerable<ProcessedEpisode> lpe = [.. doc.TvLibrary.RecentEpisodes(TVSettings.Instance.WTWRecentDays)];
         DirFilesCache dfc = new();
@@ -36,9 +37,9 @@ internal abstract class RecentExporter(TVDoc doc) : Exporter
         {
             try
             {
-                List<FileInfo> files = dfc.FindEpOnDisk(episode, false);
+                List<FileInfo> files = await dfc.FindEpOnDiskAsync(episode, false);
 
-                if (!files.Any())
+                if (!files.IsAny())
                 {
                     continue;
                 }

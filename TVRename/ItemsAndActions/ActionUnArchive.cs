@@ -6,7 +6,7 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using SharpCompress.Archives;
 using SharpCompress.Archives.GZip;
 using SharpCompress.Archives.Rar;
@@ -103,7 +103,7 @@ public class ActionUnArchive : ActionFileOperation
                 }
             }
 
-            FileHelper.DeleteOrRecycleFile(archiveFile,Tidyup );
+            FileHelper.DeleteOrRecycleFile(archiveFile, Tidyup);
             return ActionOutcome.Success();
         }
         catch (System.IO.DirectoryNotFoundException e)

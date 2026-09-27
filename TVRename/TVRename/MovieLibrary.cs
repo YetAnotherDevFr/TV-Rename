@@ -6,7 +6,7 @@ using System.Xml.Linq;
 
 namespace TVRename;
 
-public class MovieLibrary : ConcurrentDictionary<MovieConfiguration,int>
+public class MovieLibrary : ConcurrentDictionary<MovieConfiguration, int>
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -41,7 +41,7 @@ public class MovieLibrary : ConcurrentDictionary<MovieConfiguration,int>
         }
         List<MovieConfiguration> matching = [.. Movies.Where(configuration => configuration.IdFor(provider) == id)];
 
-        if (!matching.Any())
+        if (!matching.IsAny())
         {
             return null;
         }
@@ -61,7 +61,7 @@ public class MovieLibrary : ConcurrentDictionary<MovieConfiguration,int>
         }
 
         List<MovieConfiguration> matchingShows = [.. Movies.Where(configuration => configuration.AnyIdsMatch(newShow))];
-        if (matchingShows.Any())
+        if (matchingShows.IsAny())
         {
             foreach (MovieConfiguration existingshow in matchingShows)
             {
@@ -81,7 +81,7 @@ public class MovieLibrary : ConcurrentDictionary<MovieConfiguration,int>
             return;
         }
 
-        TryAdd(newShow,0);
+        TryAdd(newShow, 0);
     }
     public void AddMovies(List<MovieConfiguration>? newMovie, bool showErrors)
     {
@@ -205,7 +205,7 @@ public class MovieLibrary : ConcurrentDictionary<MovieConfiguration,int>
         }
 
         List<MovieConfiguration> matchingShows = [.. Movies.Where(configuration => configuration.AnyIdsMatch(mc))];
-        if (matchingShows.Any())
+        if (matchingShows.IsAny())
         {
             if (matchingShows.Count == 1)
             {

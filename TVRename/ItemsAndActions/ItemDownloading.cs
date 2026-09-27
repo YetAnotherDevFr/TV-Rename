@@ -6,7 +6,7 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 
 namespace TVRename;
@@ -57,7 +57,7 @@ public class ItemDownloading : Item
     public ItemDownloading(IDownloadInformation dl, ShowConfiguration series, int? seasonNumberAsInt, string desiredLocationNoExt, DownloadingFinder.DownloadApp tApp, ItemMissing me)
         : this(dl, desiredLocationNoExt, tApp, me)
     {
-        Episode=null;
+        Episode = null;
         Movie = null;
         internalShow = series;
         internalSeasonNumber = seasonNumberAsInt;

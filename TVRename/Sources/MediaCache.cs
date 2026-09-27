@@ -1,4 +1,4 @@
-using Alphaleonis.Win32.Filesystem;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -29,7 +29,7 @@ public abstract class MediaCache
 
     protected List<CachedMovieInfo> FullMovies()
     {
-            return [.. Movies.Values.Where(info => !info.IsSearchResultOnly).OrderBy(s => s.Name)];
+        return [.. Movies.Values.Where(info => !info.IsSearchResultOnly).OrderBy(s => s.Name)];
     }
 
     protected readonly ConcurrentDictionary<int, CachedSeriesInfo> Series = new();

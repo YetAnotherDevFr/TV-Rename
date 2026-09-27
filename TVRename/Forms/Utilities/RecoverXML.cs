@@ -6,9 +6,8 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace TVRename;
@@ -61,7 +60,7 @@ public partial class RecoverXml : Form
     private static void Setup(ListBox lb, string defaultValue, IReadOnlyCollection<FileInfo> files)
     {
         lb.Items.Add(defaultValue);
-        if (files.Any())
+        if (files.IsAny())
         {
             foreach (FileInfo fi in files)
             {

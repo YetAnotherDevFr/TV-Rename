@@ -1,10 +1,4 @@
-using NLog;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -34,7 +28,7 @@ public static class XmlHelper
     public static async Task<XDocument> LoadXmlFromFileAsync(string filePath, CancellationToken cancellationToken = default)
     {
         // Open an async-compatible file stream
-        using FileStream stream = File.OpenRead(filePath);
+        using FileStream stream = System.IO.File.OpenRead(filePath);
         // Load the document asynchronously
         XDocument doc = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
         return doc;
@@ -63,20 +57,18 @@ public static class XmlHelper
     /// <returns>A Task representing the asynchronous operation.</returns>
     public static async Task SaveXmlAsync(this XDocument doc, string filePath, CancellationToken cancellationToken = default)
     {
-        if (doc == null) throw new ArgumentNullException(nameof(doc));
-        if (string.IsNullOrWhiteSpace(filePath)) throw new ArgumentException("File path cannot be empty.", nameof(filePath));
+        ArgumentNullException.ThrowIfNull(doc);
+        ArgumentException.ThrowIfNullOrWhiteSpace("filePath");
 
         // Use FileOptions.Asynchronous to ensure true non-blocking OS I/O
-        using (FileStream stream = new FileStream(
+        using FileStream stream = new (
             filePath,
             FileMode.Create,
             FileAccess.Write,
             FileShare.None,
             bufferSize: 4096,
-            options: FileOptions.Asynchronous))
-        {
-            await doc.SaveAsync(stream, SaveOptions.None, cancellationToken);
-        }
+            options: FileOptions.Asynchronous);
+        await doc.SaveAsync(stream, SaveOptions.None, cancellationToken);
     }
 
     public static void WriteElement(this XmlWriter writer, string elementName, string? value, bool ignoreIfBlank)
@@ -166,7 +158,7 @@ public static class XmlHelper
 
     public static XElement GetOrCreateElement(this XElement root, string elementName)
     {
-        if (root.Elements(elementName).Any())
+        if (root.Elements(elementName).IsAny())
         {
             return root.Elements(elementName).First();
         }
@@ -266,7 +258,7 @@ public static class XmlHelper
                 Logger.Error($"Could not update element {elementName} in {e}");
             }
         }
-        else if (!e.Elements(elementName).Any())
+        else if (!e.Elements(elementName).IsAny())
         {
             e.Add(new XElement(elementName, value));
         }
@@ -349,7 +341,7 @@ public static class XmlHelper
 
     public static bool? ExtractBool(this XElement xmlSettings, string elementName)
     {
-        if (xmlSettings.Descendants(elementName).Any())
+        if (xmlSettings.Descendants(elementName).IsAny())
         {
             return XmlConvert.ToBoolean((string)xmlSettings.Descendants(elementName).First());
         }
@@ -364,7 +356,7 @@ public static class XmlHelper
 
     public static bool ExtractBool(this XElement xmlSettings, string elementName, bool defaultValue)
     {
-        if (xmlSettings.Descendants(elementName).Any())
+        if (xmlSettings.Descendants(elementName).IsAny())
         {
             return XmlConvert.ToBoolean((string)xmlSettings.Descendants(elementName).First());
         }
@@ -381,7 +373,7 @@ public static class XmlHelper
 
     public static DateTime? ExtractDateTime(this XElement xmlSettings, string elementName)
     {
-        if (xmlSettings.Descendants(elementName).Any())
+        if (xmlSettings.Descendants(elementName).IsAny())
         {
             string textVersion = (string)xmlSettings.Descendants(elementName).First();
             if (string.IsNullOrWhiteSpace(textVersion))
@@ -408,7 +400,7 @@ public static class XmlHelper
 
     public static string? ExtractStringOrNull(this XElement xmlSettings, string elementName)
     {
-        if (xmlSettings.Descendants(elementName).Any())
+        if (xmlSettings.Descendants(elementName).IsAny())
         {
             return (string)xmlSettings.Descendants(elementName).First();
         }
@@ -418,7 +410,7 @@ public static class XmlHelper
 
     public static string ExtractString(this XElement xmlSettings, string elementName, string defaultValue)
     {
-        if (xmlSettings.Descendants(elementName).Any())
+        if (xmlSettings.Descendants(elementName).IsAny())
         {
             return (string)xmlSettings.Descendants(elementName).First();
         }
@@ -430,7 +422,7 @@ public static class XmlHelper
     {
         IEnumerable<XElement> xElements = [.. xmlSettings.Descendants(elementName)];
 
-        if (xElements.Any() && !string.IsNullOrWhiteSpace((string)xElements.First()))
+        if (xElements.IsAny() && !string.IsNullOrWhiteSpace((string)xElements.First()))
         {
             try
             {

@@ -1,16 +1,16 @@
-image: Visual Studio 2022
+image: Visual Studio 2026
 configuration: Release
 platform: Any CPU
 skip_non_tags: true
 skip_branch_with_pr: true
-clone_depth: 1
+clone_depth: 5
 
 branches:
   only:
   - master
 
 cache:
-- packages -> **\packages.config
+- packages -> **\TVRename.csproj
 
 init:
 - ps: >-
@@ -37,20 +37,22 @@ assembly_info:
 test: off
 
 before_build:
-- cmd: nuget restore -verbosity quiet -PackagesDirectory TVRename\packages
+  # Restore dependencies using the dotnet CLI (which supports .slnx files)
+  - cmd: ls ../* -R
+  - dotnet restore C:\projects\tvrename\TVRename.slnx
+  - nuget restore C:\projects\tvrename\TVRename.slnx
+  - nuget restore C:\projects\tvrename\TVRename\TVRename.csproj
 
-build:
-  verbosity: minimal
+build: 
+  parallel: true                  # enable MSBuild parallel builds
+  project: C:\projects\tvrename\TVRename.slnx          # path to Visual Studio solution or project
+  verbosity: detailed             # MSBuild verbosity level
 
 after_build:
 #- cmd: ls ../* -R
 #- sh: 7z a -r TVRename-Full-Build.zip *.*
 - cmd: >-
-    curl -fsS -o "%PROGRAMFILES(x86)%\NSIS\Plugins\x86-unicode\DotNetChecker.dll" https://raw.githubusercontent.com/ReVolly/NsisDotNetChecker/master/bin/DotNetChecker.dll
-
-    curl -fsS -o DotNetChecker.nsh https://raw.githubusercontent.com/ReVolly/NsisDotNetChecker/master/nsis/DotNetChecker.nsh
-
-    "%PROGRAMFILES(x86)%\NSIS\makensis" /WX /DVERSION="%APPVEYOR_BUILD_VERSION_FRIENDLY%" /DTAG="%APPVEYOR_BUILD_VERSION%" Installer.nsi
+  "%PROGRAMFILES(x86)%\NSIS\makensis" /WX /DVERSION="%APPVEYOR_BUILD_VERSION_FRIENDLY%" /DTAG="%APPVEYOR_BUILD_VERSION%" Installer.nsi
 
 artifacts:
 #- path: 'TVRename-Full-Build.zip'
@@ -64,3 +66,5 @@ deploy:
   artifact: 'TVRename-$(appveyor_build_version)'
   on:
     appveyor_repo_tag: true
+
+

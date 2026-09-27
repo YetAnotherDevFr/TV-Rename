@@ -427,7 +427,7 @@ public partial class AddEditShow : Form, ICodeWindow
 
     private static void OpenInfoWindow(string page)
     {
-        $"https://www.tvrename.com/manual/user{page}".OpenUrlInBrowser();
+        $"http://www.tvrename.com/manual/user{page}".OpenUrlInBrowser();
     }
 
     #endregion HelpWindows
@@ -489,7 +489,8 @@ public partial class AddEditShow : Form, ICodeWindow
         selectedShow.IgnoreSeasons.Clear();
         foreach (object matcho in Regex.Matches(slist, "\\b[0-9]+\\b"))
         {
-            if (matcho is Match match){
+            if (matcho is Match match)
+            {
                 selectedShow.IgnoreSeasons.Add(int.Parse(match.Value));
             }
         }
@@ -622,7 +623,7 @@ public partial class AddEditShow : Form, ICodeWindow
             folderBrowser.SelectedPath = txtBaseFolder.Text;
         }
 
-        if (UiHelpers.ShowDialogAndOk(folderBrowser,this))
+        if (UiHelpers.ShowDialogAndOk(folderBrowser, this))
         {
             txtFolder.Text = folderBrowser.SelectedPath;
         }

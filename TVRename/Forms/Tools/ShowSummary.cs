@@ -6,15 +6,15 @@
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
 
-using Alphaleonis.Win32.Filesystem;
+
 using SourceGrid;
 using SourceGrid.Cells.Controllers;
 using SourceGrid.Cells.Views;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using TVRename.Forms;
@@ -29,19 +29,19 @@ public partial class ShowSummary : Form, IDialogParent
 {
     private UI MainWindow { get; }
     private readonly TVDoc mDoc;
+    private readonly CancellationTokenSource ct;
 
     private readonly SafeList<ShowSummaryData> showList;
 
-    public ShowSummary(TVDoc doc, UI parent)
+    public ShowSummary(TVDoc doc, UI parent, CancellationTokenSource token)
     {
         MainWindow = parent;
         mDoc = doc;
         showList = [];
+        ct = token;
 
         InitializeComponent();
         InitializeCmbShowStatus();
-
-        Scan();
     }
 
     private void InitializeCmbShowStatus()
@@ -57,16 +57,32 @@ public partial class ShowSummary : Form, IDialogParent
         }
     }
 
-    private void GenerateData(BackgroundWorker bw)
+    private async Task GenerateData(IProgress<ProgressReport> handler, CancellationToken token)
     {
         int total = mDoc.TvLibrary.Shows.Count();
         ThreadSafeCounter currentRecord = new();
         showList.Clear();
 
-        Parallel.ForEach(mDoc.TvLibrary.GetSortedShows(), new ParallelOptions { MaxDegreeOfParallelism = 12 }, si =>
+        await Parallel.ForEachAsync(
+            mDoc.TvLibrary.GetSortedShows(),
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = 12,
+                CancellationToken = token
+            },
+            async (si, token) =>
         {
-            bw.ReportProgress(100 * currentRecord.Increment() / total, si.ShowName);
-            showList.Add(AddShowDetails(si));
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            handler.Report(new ProgressReport()
+            {
+                ProgressPercentage = (int)100 * currentRecord.Increment() / total,
+                UpdateText = si.ShowName
+            });
+
+            showList.Add(await AddShowDetailsAsync(si));
         }
         );
 
@@ -234,7 +250,7 @@ public partial class ShowSummary : Form, IDialogParent
         return shows.Select(x => x.MaxSeason).DefaultIfEmpty(0).Max();
     }
 
-    private static ShowSummaryData AddShowDetails(ShowConfiguration si)
+    private async static Task<ShowSummaryData> AddShowDetailsAsync(ShowConfiguration si)
     {
         ShowSummaryData showSummary = new(showName: si.ShowName, showConfiguration: si);
 
@@ -242,7 +258,7 @@ public partial class ShowSummary : Form, IDialogParent
         {
             foreach (int snum in si.AppropriateSeasons().Keys)
             {
-                ShowSummaryData.ShowSummarySeasonData? seasonData = GetSeasonDetails(si, snum);
+                ShowSummaryData.ShowSummarySeasonData? seasonData = await GetSeasonDetailsAsync(si, snum);
                 if (seasonData != null)
                 {
                     showSummary.AddSeason(seasonData);
@@ -252,7 +268,7 @@ public partial class ShowSummary : Form, IDialogParent
         return showSummary;
     }
 
-    private static ShowSummaryData.ShowSummarySeasonData? GetSeasonDetails(ShowConfiguration si, int snum)
+    private async static Task<ShowSummaryData.ShowSummarySeasonData?> GetSeasonDetailsAsync(ShowConfiguration si, int snum)
     {
         int epCount = 0;
         int epGotCount = 0;
@@ -271,7 +287,7 @@ public partial class ShowSummary : Form, IDialogParent
                     epAiredCount++;
                 }
 
-                List<FileInfo> fl = dfc.FindEpOnDisk(ei, false);
+                List<FileInfo> fl = await dfc.FindEpOnDiskAsync(ei, false);
                 if (fl.Count != 0)
                 {
                     epGotCount++;
@@ -330,7 +346,7 @@ public partial class ShowSummary : Form, IDialogParent
             mDoc = doc;
         }
 
-        public override void OnMouseDown(CellContext sender, MouseEventArgs e)
+        public async override void OnMouseDown(CellContext sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
             {
@@ -348,7 +364,7 @@ public partial class ShowSummary : Form, IDialogParent
                         processedSeason.Show.IgnoreSeasons.Remove(processedSeason.SeasonNumber);
                         await mDoc.TvAddedOrEditedAsync(false, false, false, null, processedSeason.Show);
                         gridSummary.PopulateGrid();
-                        gridSummary.MainWindow.FillMyShows();
+                        await gridSummary.MainWindow.FillMyShowsAsync();
                     });
                 }
                 else
@@ -358,7 +374,7 @@ public partial class ShowSummary : Form, IDialogParent
                         processedSeason.Show.IgnoreSeasons.Add(processedSeason.SeasonNumber);
                         await mDoc.TvAddedOrEditedAsync(false, false, false, null, processedSeason.Show);
                         gridSummary.PopulateGrid();
-                        gridSummary.MainWindow.FillMyShows();
+                        await gridSummary.MainWindow.FillMyShowsAsync();
                     });
                 }
             }
@@ -370,7 +386,7 @@ public partial class ShowSummary : Form, IDialogParent
                     show.DoMissingCheck = false;
                     await mDoc.TvAddedOrEditedAsync(false, false, false, null, show);
                     gridSummary.PopulateGrid();
-                    gridSummary.MainWindow.FillMyShows();
+                    await gridSummary.MainWindow.FillMyShowsAsync();
                 });
             }
             else
@@ -380,7 +396,7 @@ public partial class ShowSummary : Form, IDialogParent
                     show.DoMissingCheck = true;
                     await mDoc.TvAddedOrEditedAsync(false, false, false, null, show);
                     gridSummary.PopulateGrid();
-                    gridSummary.MainWindow.FillMyShows();
+                    await gridSummary.MainWindow.FillMyShowsAsync();
                 });
             }
 
@@ -414,25 +430,25 @@ public partial class ShowSummary : Form, IDialogParent
 
             if (processedSeason != null)
             {
-                GenerateOpenMenu(processedSeason, added);
+                await GenerateOpenMenuAsync(processedSeason, added);
             }
 
-            GenerateRightClickOpenMenu(added);
+            await GenerateRightClickOpenMenuAsync(added);
 
             if (processedSeason != null)
             {
-                GenerateRightClickWatchMenu(processedSeason);
+                await GenerateRightClickWatchMenuAsync(processedSeason);
             }
 
             Point pt = new(e.X, e.Y);
             gridSummary.rightClickMenu.Show(sender.Grid.PointToScreen(pt));
         }
 
-        private void GenerateOpenMenu(ProcessedSeason seas, List<string> added)
+        private async Task GenerateOpenMenuAsync(ProcessedSeason seas, List<string> added)
         {
-            Dictionary<int, SafeList<string>> afl = show.AllExistngFolderLocations();
+            Dictionary<int, SafeList<string>> afl = await show.AllExistngFolderLocationsAsync();
 
-            if (!afl.TryGetValue(seas.SeasonNumber, out SafeList<string>?  seasonData))
+            if (!afl.TryGetValue(seas.SeasonNumber, out SafeList<string>? seasonData))
             {
                 return;
             }
@@ -457,11 +473,11 @@ public partial class ShowSummary : Form, IDialogParent
             }
         }
 
-        private void GenerateRightClickOpenMenu(List<string> added)
+        private async Task GenerateRightClickOpenMenuAsync(List<string> added)
         {
             bool first = true;
 
-            foreach (KeyValuePair<int, SafeList<string>> kvp in show.AllExistngFolderLocations().OrderBy(pair => pair.Key))
+            foreach (KeyValuePair<int, SafeList<string>> kvp in (await show.AllExistngFolderLocationsAsync()).OrderBy(pair => pair.Key))
             {
                 foreach (string folder in kvp.Value)
                 {
@@ -483,14 +499,14 @@ public partial class ShowSummary : Form, IDialogParent
             }
         }
 
-        private void GenerateRightClickWatchMenu(ProcessedSeason seas)
+        private async Task GenerateRightClickWatchMenuAsync(ProcessedSeason seas)
         {
             // for each episode in season, find it on disk
             bool first = true;
             DirFilesCache dfc = new();
             foreach (ProcessedEpisode epds in show.EpisodesForSeason(seas.SeasonNumber))
             {
-                List<FileInfo> fl = dfc.FindEpOnDisk(epds, false);
+                List<FileInfo> fl = await dfc.FindEpOnDiskAsync(epds, false);
                 if (fl.Count != 0)
                 {
                     if (first)
@@ -512,7 +528,7 @@ public partial class ShowSummary : Form, IDialogParent
 
     #region Nested type: ShowSummaryData
 
-    public class ShowSummaryData(string showName, ShowConfiguration showConfiguration)
+    public class ShowSummaryData(string showName, ShowConfiguration showConfiguration) : IComparable
     {
         public int MaxSeason;
         public readonly List<ShowSummarySeasonData> SeasonDataList = [];
@@ -664,6 +680,12 @@ public partial class ShowSummary : Form, IDialogParent
         {
             return SeasonDataList.Any(ssn => ssn.HasEpisodesOnDisk());
         }
+
+        public int CompareTo(object? obj)
+        {
+            if (obj is null) { return 0; }
+            return ShowName.CompareTo(((ShowSummaryData)obj).ShowName);
+        }
     }
 
     #endregion Nested type: ShowSummaryData
@@ -683,14 +705,29 @@ public partial class ShowSummary : Form, IDialogParent
         PopulateGrid();
     }
 
-    private void Scan()
+    private async Task ScanAsync(CancellationToken token)
     {
         btnRefresh.Visible = false;
         EnableCheckboxes(false);
 
         pbProgress.Visible = true;
         lblStatus.Visible = true;
-        bwRescan.RunWorkerAsync();
+
+        var progressHandler = new Progress<ProgressReport>(scanReport =>
+        {
+            // This body executes safely on the main thread
+            pbProgress.SetProgress(scanReport.ProgressPercentage);
+            lblStatus.Text = scanReport.UpdateText.ToUiVersion();
+        });
+
+        await GenerateData(progressHandler, token);
+
+        btnRefresh.Visible = true;
+        EnableCheckboxes(true);
+
+        pbProgress.Visible = false;
+        lblStatus.Visible = false;
+        PopulateGrid();
     }
 
     private void EnableCheckboxes(bool enabled)
@@ -706,43 +743,25 @@ public partial class ShowSummary : Form, IDialogParent
         btnClear.Enabled = enabled;
     }
 
-    private void BwRescan_DoWork(object sender, DoWorkEventArgs e)
-    {
-        System.Threading.Thread.CurrentThread.Name ??= "ShowSummary Scan Thread"; // Can only set it once
-        GenerateData((BackgroundWorker)sender);
-    }
 
-    private void BwRescan_ProgressChanged(object sender, ProgressChangedEventArgs e)
+    private async void btnRefresh_Click(object sender, EventArgs e)
     {
-        pbProgress.SetProgress(e.ProgressPercentage);
-        if (e.UserState is not null)
-        {
-            lblStatus.Text = e.UserState.ToString()?.ToUiVersion();
-        }
-    }
-
-    private void BwRescan_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-    {
-        btnRefresh.Visible = true;
-        EnableCheckboxes(true);
-
-        pbProgress.Visible = false;
-        lblStatus.Visible = false;
-        PopulateGrid();
-    }
-
-    private void btnRefresh_Click(object sender, EventArgs e)
-    {
-        Scan();
+        await ScanAsync(ct.Token);
     }
 
     private void button1_Click(object sender, EventArgs e)
     {
+        //TODO Cancel runnign tasks
         Close();
     }
 
     private void cmbShowStatus_SelectedIndexChanged(object sender, EventArgs e)
     {
         PopulateGrid();
+    }
+
+    internal async Task StartScanAsync()
+    {
+        await ScanAsync(ct.Token);
     }
 }

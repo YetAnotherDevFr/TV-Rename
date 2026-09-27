@@ -5,7 +5,7 @@
 //
 // Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
 //
-using Alphaleonis.Win32.Filesystem;
+
 using NLog;
 using NodaTime;
 using System;
@@ -186,28 +186,28 @@ internal static class FinderHelper
         return FindSeasEp(theFile, out seasF, out epF, out maxEp, sI, out TVSettings.FilenameProcessorRE? _);
     }
 
-    public static bool FileNeeded(FileInfo fi, ShowConfiguration si, DirFilesCache dfc)
+    public async static Task<bool> FileNeededAsync(FileInfo fi, ShowConfiguration si, DirFilesCache dfc)
     {
         if (FindSeasEp(fi, out int seasF, out int epF, out _, si, out _))
         {
-            return EpisodeNeeded(si, dfc, seasF, epF, fi);
+            return await EpisodeNeededAsync(si, dfc, seasF, epF, fi);
         }
 
         //We may need the file
         return true;
     }
 
-    public static bool FileNeeded(FileInfo fi, MovieConfiguration si, DirFilesCache dfc)
+    public static async Task<bool> FileNeededAsync(FileInfo fi, MovieConfiguration si, DirFilesCache dfc)
     {
-        return MovieNeeded(si, dfc, fi);
+        return await MovieNeededAsync(si, dfc, fi);
     }
 
-    private static bool MovieNeeded(MovieConfiguration si, DirFilesCache dfc, FileInfo fi)
+    private static async Task<bool> MovieNeededAsync(MovieConfiguration si, DirFilesCache dfc, FileInfo fi)
     {
         ArgumentNullException.ThrowIfNull(fi);
         ArgumentNullException.ThrowIfNull(si);
 
-        foreach (FileInfo testFileInfo in FindMovieOnDisk(dfc, si))
+        foreach (FileInfo testFileInfo in await FindMovieOnDiskAsync(dfc, si))
         {
             //We will check that the file that is found is not the one we are testing
             if (fi.FullName == testFileInfo.FullName)
@@ -222,7 +222,7 @@ internal static class FinderHelper
     }
 
     /// <exception cref="ArgumentNullException"><paramref name="di"/> is <see langword="null"/></exception>
-    public static bool FileNeeded(DirectoryInfo? di, ShowConfiguration? si, DirFilesCache dfc)
+    public async static Task<bool> FileNeededAsync(DirectoryInfo? di, ShowConfiguration? si, DirFilesCache dfc)
     {
         ArgumentNullException.ThrowIfNull(di);
 
@@ -230,7 +230,7 @@ internal static class FinderHelper
 
         if (FindSeasEp(di, out int seasF, out int epF, si, out _))
         {
-            return EpisodeNeeded(si, dfc, seasF, epF, di);
+            return await EpisodeNeededAsync(si, dfc, seasF, epF, di);
         }
 
         //We may need the file
@@ -238,13 +238,13 @@ internal static class FinderHelper
     }
 
     /// <exception cref="ArgumentNullException"><paramref name="di"/> is <see langword="null"/></exception>
-    public static bool FileNeeded(DirectoryInfo? di, MovieConfiguration? si, DirFilesCache dfc)
+    public static async Task<bool> FileNeededAsync(DirectoryInfo? di, MovieConfiguration? si, DirFilesCache dfc)
     {
         ArgumentNullException.ThrowIfNull(di);
 
         ArgumentNullException.ThrowIfNull(si);
 
-        foreach (FileInfo testFileInfo in FindMovieOnDisk(dfc, si))
+        foreach (FileInfo testFileInfo in (await FindMovieOnDiskAsync(dfc, si)))
         {
             //We will check that the file that is found is not the one we are testing
             if (di.FullName == testFileInfo.FullName)
@@ -258,24 +258,18 @@ internal static class FinderHelper
         return true;
     }
 
-    public static IEnumerable<FileInfo> FindMovieOnDisk(this DirFilesCache cache, MovieConfiguration si)
+    public static async Task<IEnumerable<FileInfo>> FindMovieOnDiskAsync(this DirFilesCache cache, MovieConfiguration si)
     {
-        return si.Locations
+        return (await si.LocationsAsync())
             .SelectMany(cache.GetFiles)
             .Where(fiTemp => fiTemp.IsMovieFile())
             .Where(fiTemp => si.NameMatch(fiTemp, false));
     }
 
-    public static List<FileInfo> FindEpOnDisk(this DirFilesCache? dfc, ProcessedEpisode pe,
+    public async static Task<List<FileInfo>> FindEpOnDiskAsync(this DirFilesCache? dfc, ProcessedEpisode pe,
         bool checkDirectoryExist = true)
     {
-        return FindEpOnDisk(dfc, pe.Show, pe, checkDirectoryExist);
-    }
-
-    public static async Task<List<FileInfo>> FindEpOnDiskAsync(this DirFilesCache? dfc, ProcessedEpisode pe,
-        bool checkDirectoryExist = true)
-    {
-        return await FindEpOnDiskAsync(dfc, pe.Show, pe, true);
+        return await FindEpOnDiskAsync(dfc, pe.Show, pe, checkDirectoryExist);
     }
 
     private static async Task<List<FileInfo>> FindEpOnDiskAsync(DirFilesCache? dfc, ShowConfiguration si, ProcessedEpisode epi,
@@ -320,7 +314,7 @@ internal static class FinderHelper
         return ret;
     }
 
-    private static List<FileInfo> FindEpOnDisk(DirFilesCache? dfc, ShowConfiguration si, ProcessedEpisode epi,
+    private async static Task<List<FileInfo>> FindEpOnDisk(DirFilesCache? dfc, ShowConfiguration si, ProcessedEpisode epi,
         bool checkDirectoryExist = true)
     {
         DirFilesCache cache = dfc ?? new DirFilesCache();
@@ -332,7 +326,7 @@ internal static class FinderHelper
 
         int snum = seasWanted;
 
-        Dictionary<int, SafeList<string>> dirs = si.AllFolderLocationsEpCheck(checkDirectoryExist);
+        Dictionary<int, SafeList<string>> dirs = await si.AllFolderLocationsEpCheckAsync(checkDirectoryExist);
 
         if (!dirs.TryGetValue(snum, out SafeList<string>? folders))
         {
@@ -364,7 +358,7 @@ internal static class FinderHelper
 
     private static bool IsMovieFile(FileInfo f) => f.IsMovieFile();
 
-    private static bool EpisodeNeeded(ShowConfiguration si, DirFilesCache dfc, int seasF, int epF,
+    private async static Task<bool> EpisodeNeededAsync(ShowConfiguration si, DirFilesCache dfc, int seasF, int epF,
         FileSystemInfo fi)
     {
         ArgumentNullException.ThrowIfNull(si);
@@ -382,7 +376,7 @@ internal static class FinderHelper
 
             ProcessedEpisode pep = si.GetEpisode(seasF, epF);
 
-            foreach (FileInfo testFileInfo in FindEpOnDisk(dfc, si, pep))
+            foreach (FileInfo testFileInfo in await FindEpOnDiskAsync(dfc, si, pep))
             {
                 //We will check that the file that is found is not the one we are testing
                 if (fi.FullName == testFileInfo.FullName)
@@ -653,13 +647,13 @@ internal static class FinderHelper
     }
 
     private static bool LookForSeries(string test, IEnumerable<MediaConfiguration> shows)
-        => GetMatchingSeries(test,shows).Any();
+        => GetMatchingSeries(test, shows).IsAny();
 
     private static IEnumerable<MediaConfiguration> GetMatchingSeries(string test, IEnumerable<MediaConfiguration> shows)
         => shows.Where(si => si.NameMatch(test));
 
     private static bool LookForMovies(string test, IEnumerable<MediaConfiguration> shows)
-        => GetMatchingMovies(test,shows).Any();
+        => GetMatchingMovies(test, shows).IsAny();
 
     private static IEnumerable<MediaConfiguration> GetMatchingMovies(string test, IEnumerable<MediaConfiguration> shows)
     {
@@ -811,7 +805,7 @@ internal static class FinderHelper
         //if hint doesn't match existing added shows
         if (LookForSeries(refinedHint, doc.TvLibrary.Shows))
         {
-            Logger.Warn($"Ignoring {hint}({refinedHint}) as it matches shows ({GetMatchingSeries(refinedHint,doc.TvLibrary.Shows).Select(s=>s.Name).ToCsv()}) already in the library.");
+            Logger.Warn($"Ignoring {hint}({refinedHint}) as it matches shows ({GetMatchingSeries(refinedHint, doc.TvLibrary.Shows).Select(s => s.Name).ToCsv()}) already in the library.");
             return;
         }
 
@@ -865,7 +859,7 @@ internal static class FinderHelper
                     newMovie.AliasNames.Add(hint);
                 }
 
-                addedShows.Add(new PossibleMedia(newMovie,refinedHint));
+                addedShows.Add(new PossibleMedia(newMovie, refinedHint));
                 doc.Stats().AutoAddedMovies++;
                 return;
             }
@@ -879,7 +873,7 @@ internal static class FinderHelper
         {
             // no need to popup dialog
             Logger.Info($"Auto Adding New Show for '{refinedHint}' : {askForMatch.ShowConfiguration.CachedShow?.Name}");
-            addedShows.Add(new PossibleMedia(askForMatch.ShowConfiguration,refinedHint));
+            addedShows.Add(new PossibleMedia(askForMatch.ShowConfiguration, refinedHint));
             doc.Stats().AutoAddedShows++;
         }
         else if (askForMatch.SingleMovieFound && !askForMatch.SingleTvShowFound &&
@@ -901,12 +895,12 @@ internal static class FinderHelper
                 //If added add show to the collection
                 if (askForMatch.ShowConfiguration.Code > 0)
                 {
-                    addedShows.Add(new PossibleMedia(askForMatch.ShowConfiguration,refinedHint));
+                    addedShows.Add(new PossibleMedia(askForMatch.ShowConfiguration, refinedHint));
                     doc.Stats().AutoAddedShows++;
                 }
                 else if (askForMatch.MovieConfiguration.Code > 0)
                 {
-                    addedShows.Add(new PossibleMedia(askForMatch.MovieConfiguration,refinedHint));
+                    addedShows.Add(new PossibleMedia(askForMatch.MovieConfiguration, refinedHint));
                     doc.Stats().AutoAddedMovies++;
                 }
             }
@@ -979,7 +973,7 @@ internal static class FinderHelper
 
         IEnumerable<ShowConfiguration> matchAtStart = showsMatchAtStart as ShowConfiguration[] ?? [.. showsMatchAtStart];
 
-        if (matchAtStart.Any())
+        if (matchAtStart.IsAny())
         {
             return matchAtStart.MaxBy(s => s.ShowName.Length);
         }
@@ -997,7 +991,7 @@ internal static class FinderHelper
 
         IEnumerable<MovieConfiguration> matchAtStart = showsMatchAtStart as MovieConfiguration[] ?? [.. showsMatchAtStart];
 
-        if (matchAtStart.Any())
+        if (matchAtStart.IsAny())
         {
             return matchAtStart.MaxBy(s => s.ShowName.Length);
         }
