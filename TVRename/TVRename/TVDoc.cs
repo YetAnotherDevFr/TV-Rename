@@ -1005,7 +1005,7 @@ public class TVDoc : IDisposable, IAsyncDisposable
 
             if (configuration != null && seasonNum != null)
             {
-                if (configuration.EpisodesForSeason(seasonNum.Value).Count == season.Count() && season.Count() > 1)
+                if (configuration.AllEpisodesForSeason(seasonNum.Value).Count == season.Count() && season.Count() > 1)
                 {
                     TheActionList.Replace(season, new ShowSeasonMissing(configuration, seasonNum.Value, season.First().TargetFolder, [.. season]));
                 }
@@ -2271,11 +2271,16 @@ public class TVDoc : IDisposable, IAsyncDisposable
         {
             saveCachesTask = SaveCachesAsync();
         }
+        else
+        {
+            Logger.Info("Caches already being saved, skipping for now...");
+        }
         await saveCachesTask;
     }
 
     private static async Task SaveCachesAsync()
     {
+        Logger.Info("Attempting to save caches");
         try
         {
             await Task.Run(() =>
