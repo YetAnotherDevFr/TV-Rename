@@ -1,3 +1,11 @@
+//
+// Main website for TVRename is http://tvrename.com
+//
+// Source code available at https://github.com/TV-Rename/tvrename
+//
+// Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
+//
+
 using Humanizer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -628,7 +636,7 @@ public static class API
         }
         catch
         {
-            Logger.Error($"Failed to parse Epsiode update date {lastUpdateString}");
+            Logger.Error($"Failed to parse Episode update date {lastUpdateString}");
             return DEFLT;
         }
     }

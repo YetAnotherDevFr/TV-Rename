@@ -8,9 +8,6 @@
 
 
 
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 using TVRename.Forms;
 
 namespace TVRename;
@@ -393,17 +390,18 @@ public partial class AddEditMovie : Form, ICodeWindow
 
     #region HelpWindows
 
-    private void pbBasics_Click(object sender, EventArgs e) => OpenInfoWindow("/#the-basics-tab");
+    private void pbBasics_Click(object sender, EventArgs e) => OpenInfoWindow("#basics");
 
-    private void pbAdvanced_Click(object sender, EventArgs e) => OpenInfoWindow("/#the-advanced-tab");
+    private void pbAdvanced_Click(object sender, EventArgs e) => OpenInfoWindow("#advanced");
 
-    private void pbAliases_Click(object sender, EventArgs e) => OpenInfoWindow("/#the-show-aliases-tab");
+    private void pbAliases_Click(object sender, EventArgs e) => OpenInfoWindow("#aliases");
 
-    private void pbFolders_Click(object sender, EventArgs e) => OpenInfoWindow("/#the-folders-tab");
+    private void pbFolders_Click(object sender, EventArgs e) => OpenInfoWindow("#folders");
+    private void pbCustomFN_Click(object sender, EventArgs e) => OpenInfoWindow("#custom-file-naming");
 
     private static void OpenInfoWindow(string page)
     {
-        $"http://www.tvrename.com/manual/user{page}".OpenUrlInBrowser();
+        $"https://www.tvrename.com/main/movies{page}".OpenUrlInBrowser();
     }
 
     #endregion HelpWindows

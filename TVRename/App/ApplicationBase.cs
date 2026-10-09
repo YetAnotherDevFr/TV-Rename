@@ -1,3 +1,11 @@
+//
+// Main website for TVRename is http://tvrename.com
+//
+// Source code available at https://github.com/TV-Rename/tvrename
+//
+// Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
+//
+
 using Microsoft.VisualBasic.ApplicationServices;
 using Microsoft.Win32;
 using NLog.Config;
@@ -15,7 +23,7 @@ namespace TVRename.App;
 /// <seealso cref="WindowsFormsApplicationBase" />
 internal class ApplicationBase : WindowsFormsApplicationBase
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
     private TVDoc? doc;
     private UI? ui;
 
@@ -47,7 +55,7 @@ internal class ApplicationBase : WindowsFormsApplicationBase
     protected override void OnCreateMainForm()
     {
         CommandLineArgs parameters = new(CommandLineArgs);
-        if (parameters.Hide || !Environment.UserInteractive)
+        if (parameters.Hide || parameters.Unattended || !Environment.UserInteractive)
         {
             SplashScreen.SafeInvoke(
                 () => ((TVRenameSplash)SplashScreen).Visible = false, true);
@@ -129,7 +137,7 @@ internal class ApplicationBase : WindowsFormsApplicationBase
                 }
                 else
                 {
-                    Logger.Error("User requested no recovery");
+                    logger.Error("User requested no recovery");
                     throw new TVRenameOperationInterruptedException();
                 }
             }
@@ -182,7 +190,7 @@ internal class ApplicationBase : WindowsFormsApplicationBase
 
     private void AlertUser(string message, int percent)
     {
-        Logger.Info($"Splash Screen Updated with: {percent}/100 {message}");
+        logger.Info($"Splash Screen Updated with: {percent}/100 {message}");
         // Update splash screen
         SplashScreen.SafeInvoke(
             () => ((TVRenameSplash)SplashScreen).UpdateStatus(message), true);
@@ -207,7 +215,7 @@ internal class ApplicationBase : WindowsFormsApplicationBase
                     MessageBox.Show($"Error while setting the User-Defined File Path:{Environment.NewLine}{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
-                Logger.Error(ex, $"Error while setting the User-Defined File Path - EXITING: {userFilePath}");
+                logger.Error(ex, $"Error while setting the User-Defined File Path - EXITING: {userFilePath}");
 
                 Environment.Exit(1);
             }
@@ -222,9 +230,9 @@ internal class ApplicationBase : WindowsFormsApplicationBase
         SetupPapertrailLogging();
         //SetupSemaTextLogging();
 
-        Logger.Fatal($"TV Rename {Helpers.DisplayVersion} logging started on {Environment.OSVersion}, {(Environment.Is64BitOperatingSystem ? "64 Bit OS" : string.Empty)}, {(Environment.Is64BitProcess ? "64 Bit Process" : "")} {Environment.Version} {(Environment.UserInteractive ? "Interactive" : "")} with args: '{string.Join(" ", CommandLineArgs)}' {TimeHelpers.TimeDebugMessage}");
-        Logger.Info($"Copyright (C) {TimeHelpers.LocalNow().Year} TV Rename");
-        Logger.Info("This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions");
+        logger.Fatal($"TV Rename {Helpers.DisplayVersion} logging started on {Environment.OSVersion}, {(Environment.Is64BitOperatingSystem ? "64 Bit OS" : string.Empty)}, {(Environment.Is64BitProcess ? "64 Bit Process" : "")} {Environment.Version} {(Environment.UserInteractive ? "Interactive" : "")} with args: '{string.Join(" ", CommandLineArgs)}' {TimeHelpers.TimeDebugMessage}");
+        logger.Info($"Copyright (C) {TimeHelpers.LocalNow().Year} TV Rename");
+        logger.Info("This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions");
     }
 
     // ReSharper disable once UnusedMember.Local
@@ -281,7 +289,7 @@ internal class ApplicationBase : WindowsFormsApplicationBase
         }
         catch
         {
-            Logger.Error("Failed to setup logging with sema");
+            logger.Error("Failed to setup logging with sema");
         }
     }
 
@@ -311,7 +319,7 @@ internal class ApplicationBase : WindowsFormsApplicationBase
         }
         catch
         {
-            Logger.Error("Failed to setup logging with papertrail");
+            logger.Error("Failed to setup logging with papertrail");
         }
     }
 
@@ -319,7 +327,7 @@ internal class ApplicationBase : WindowsFormsApplicationBase
     {
         if (ui is null)
         {
-            Logger.Warn($"Cannot pass {args.ToCsv()} to running instance Main Form 'ui' is not created yet.");
+            logger.Warn($"Cannot pass {args.ToCsv()} to running instance Main Form 'ui' is not created yet.");
         }
         else
         {

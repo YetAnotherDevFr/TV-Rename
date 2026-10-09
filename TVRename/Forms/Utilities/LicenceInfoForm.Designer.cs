@@ -1,3 +1,11 @@
+//
+// Main website for TVRename is http://tvrename.com
+//
+// Source code available at https://github.com/TV-Rename/tvrename
+//
+// Copyright (c) TV Rename. This code is released under GPLv3 https://github.com/TV-Rename/tvrename/blob/master/LICENSE.md
+//
+
 using System.Drawing;
 
 namespace TVRename.Forms.Utilities
@@ -121,7 +129,7 @@ namespace TVRename.Forms.Utilities
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(264, 13);
             this.label6.TabIndex = 8;
-            this.label6.Text = "papertrailapp.com to send annonymous crash statistics";
+            this.label6.Text = "papertrailapp.com to send anonymous crash statistics";
             // 
             // lblCopyright
             // 
