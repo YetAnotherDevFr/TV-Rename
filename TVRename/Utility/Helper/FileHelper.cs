@@ -56,7 +56,7 @@ public static class FileHelper
         });
     }
 
-    public static void DeleteOrRecycleFile(FileInfo? file, TVSettings.TidySettings? Tidyup)
+    public static void DeleteOrRecycleFile(this FileInfo? file, TVSettings.TidySettings? Tidyup)
     {
         if (file is null)
         {
@@ -813,6 +813,30 @@ public static class FileHelper
         }
     }
 
+    public static async Task<bool> DirectoryExistsAsync(DirectoryInfo path, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Offloads the synchronous disk check to the thread pool
+            return await Task.Run(() =>
+            {
+                // Regularly check for cancellation prior to hitting the disk
+                cancellationToken.ThrowIfCancellationRequested();
+
+                return path.Exists;
+            }, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Propagate cancellation correctly
+            throw;
+        }
+        catch (Exception)
+        {
+            // Fallback for security exceptions, invalid characters, or path format errors
+            return false;
+        }
+    }
 
     public static async Task MoveFileWithProgressAsync(
                                         FileInfo From,
@@ -823,7 +847,7 @@ public static class FileHelper
         await CopyFileWithProgressAsync(From, To, progress, cancellationToken);
 
         // Complete the "move" by deleting the source file after a successful copy
-        From.Delete(); //todo use soemthing safer!
+        From.DeleteOrRecycleFile(null);
     }
 
     private static async Task CopyFileWithProgressAsync(FileInfo From, string To, IProgress<CopyMoveProgress> progress, CancellationToken cancellationToken)
