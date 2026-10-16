@@ -8,12 +8,20 @@
 
 using System.Xml.Serialization;
 
-namespace TVRename.Settings.AppState;
+namespace TVRename.Settings;
 
 public class State
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-    public UpdateCheck UpdateCheck { get; } = new();
+    public DateTime? LastUpdateCheckUtc { get; set; }
+
+    [XmlIgnore]
+    public TimeSpan LastUpdate => TimeHelpers.UtcNow() - LastUpdateCheckUtc.GetValueOrDefault(DateTime.MinValue);
+
+    internal void UpdateLastCheckTime()
+    {
+        LastUpdateCheckUtc = TimeHelpers.UtcNow();
+    }
 
     public static State LoadFromDefaultFile() => LoadFromFile(PathManager.StateFile.FullName);
 

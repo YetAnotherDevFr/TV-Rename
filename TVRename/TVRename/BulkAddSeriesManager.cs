@@ -23,7 +23,7 @@ public class BulkAddSeriesManager(TVDoc doc)
 
     public static async Task GuessShowItemAsync(PossibleNewTvShow ai, ShowLibrary library, bool showErrorMsgBox)
     {
-        iPossibleTVShowIdentifier[] identifiers =
+        IPossibleTVShowIdentifier[] identifiers =
             [
             new IdentifyFromFilenameCodes(), //Looks for a code in the filename or folder name (e.g. {tvdb=12345}, {tmdb=12345}, etc.)
             new IdentifyFromNFOFiles(), //Looks for a code in the NFO file
@@ -44,11 +44,16 @@ public class BulkAddSeriesManager(TVDoc doc)
                     CachedSeriesInfo? cachedSeries = GetTypeInstance(type).GetSeries(code);
                     if (cachedSeries != null)
                     {
+                        ai.UpdateId(code, type); //Update again as the name is now known
                         return;
                     }
                 }
             }
-            catch (MediaNotIdentifiedException ex)
+            catch (MediaNotFoundException)
+            {
+                //not really an issue so we can continue
+            }
+            catch (MediaNotIdentifiedException)
             {
                 //not really an issue so we can continue
             }
@@ -56,7 +61,7 @@ public class BulkAddSeriesManager(TVDoc doc)
         Logger.Warn($"Could not match the possible tv show: {ai}");
     }
 
-    private static iTVSource GetTypeInstance(TVDoc.ProviderType type)
+    private static ITVSource GetTypeInstance(TVDoc.ProviderType type)
     {
         if (type == TVDoc.ProviderType.TheTVDB)
             return TheTVDB.LocalCache.Instance;
@@ -69,8 +74,6 @@ public class BulkAddSeriesManager(TVDoc doc)
 
     private async Task<(bool, DirectoryInfo[]?, string)> HasSeasonFoldersAsync(DirectoryInfo di)
     {
-        var folderFormat = string.Empty;
-
         try
         {
             var subDirs = await di.GetDirectoriesAsync();
@@ -81,6 +84,7 @@ public class BulkAddSeriesManager(TVDoc doc)
                 foreach (DirectoryInfo subDir in subDirs)
                 {
                     string regex = "^(?<prefix>.*)(?<folderName>" + sw + "\\s*)(?<number>\\d+)$";
+                    var folderFormat = string.Empty;
                     try
                     {
                         Match m = Regex.Match(subDir.Name, regex, RegexOptions.IgnoreCase);

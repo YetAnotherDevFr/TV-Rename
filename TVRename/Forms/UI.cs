@@ -149,11 +149,10 @@ public partial class UI : Form, IDialogParent
             {
                 UpdateSplashStatus(splash, "Running Auto-scan", 100);
             }
-            SetStartUpTab();
             UpdateSplashStatus(splash, "Opening...", 100);
         }
     }
-    private void ApplyColorOverrides(Control container, SystemColorMode colorMode)
+    private static void ApplyColorOverrides(Control container, SystemColorMode colorMode)
     {
         foreach (Control c in container.Controls)
         {
@@ -1010,6 +1009,8 @@ public partial class UI : Form, IDialogParent
         var m = mDoc.WriteUpcomingAsync();
         var n = mDoc.WriteRecentAsync();
 
+        SetStartUpTab();
+
         foreach (TabPage tp in tabControl1.TabPages) // grr! why does it go white?
         {
             tp.BackColor = SystemColors.Control;
@@ -1058,7 +1059,7 @@ public partial class UI : Form, IDialogParent
                 return;
             case TVSettings.UpdateCheckMode.Interval:
                 {
-                    TimeSpan lastUpdate = mDoc.CurrentAppState.UpdateCheck.LastUpdate;
+                    TimeSpan lastUpdate = mDoc.CurrentAppState.LastUpdate;
                     TimeSpan interval = TVSettings.Instance.UpdateCheckInterval;
                     if (lastUpdate >= interval)
                     {
@@ -1185,7 +1186,10 @@ public partial class UI : Form, IDialogParent
             {
                 await FillMyShowsAsync(true);
                 FillMyMovies();
+
                 await FillEpGuideHtmlAsync();
+                await FillMovieGuideHtmlAsync();
+
                 await FillWhenToWatchListAsync();
                 BGDownloadTimer_QuickFire();
             }));
@@ -1397,7 +1401,7 @@ public partial class UI : Form, IDialogParent
 
     #endregion
 
-    private async void UI_FormClosing(object sender, FormClosingEventArgs e)
+    private async void UI_FormClosing(object? sender, FormClosingEventArgs e)
     {
         //We never allow it to happen automatically
         e.Cancel = true;
@@ -1589,7 +1593,7 @@ public partial class UI : Form, IDialogParent
 
     public static string QuickStartGuide() => "https://www.tvrename.com/guides/quick-start-guide";
 
-    private void ShowQuickStartGuide()
+    private void ShowTVQuickStartGuide()
     {
         try
         {
@@ -1610,11 +1614,31 @@ public partial class UI : Form, IDialogParent
         }
     }
 
+    private void ShowMovieQuickStartGuide()
+    {
+        try
+        {
+            chrMovieInformation.SetHtmlEmbed(QuickStartGuide());
+            chrMovieImages.SetHtmlEmbed(QuickStartGuide());
+            chrMovieTrailer.SetHtmlEmbed(QuickStartGuide());
+        }
+        catch (COMException ex)
+        {
+            //Fail gracefully - no RHS episode guide is not too big of a problem.
+            Logger.Warn(ex, "Could not update UI for the QuickStart Guide");
+        }
+        catch (Exception ex)
+        {
+            //Fail gracefully - no RHS episode guide is not too big of a problem.
+            Logger.Error(ex);
+        }
+    }
+
     private async Task FillEpGuideHtmlAsync()
     {
         if (MyShowTree.Nodes.Count == 0)
         {
-            ShowQuickStartGuide();
+            ShowTVQuickStartGuide();
         }
         else
         {
@@ -1627,13 +1651,19 @@ public partial class UI : Form, IDialogParent
     {
         if (movieTree.Nodes.Count == 0)
         {
-            ShowQuickStartGuide();
+            ShowMovieQuickStartGuide();
         }
         else
         {
             TreeNode? n = movieTree.SelectedNode;
             await FillMovieGuideHtml(TreeNodeToMovieItem(n));
         }
+    }
+
+    private void ShowQuickStartGuide()
+    {
+        ShowMovieQuickStartGuide();
+        ShowTVQuickStartGuide();
     }
 
     private static MovieConfiguration? TreeNodeToMovieItem(TreeNode? n)
@@ -2642,7 +2672,7 @@ public partial class UI : Form, IDialogParent
 
         ServerRelease? result = await VersionUpdater.CheckForUpdatesAsync().ConfigureAwait(false);
 
-        mDoc.CurrentAppState.UpdateCheck.LastUpdateCheckUtc = TimeHelpers.UtcNow();
+        mDoc.CurrentAppState.UpdateLastCheckTime();
         try
         {
             mDoc.CurrentAppState.SaveToDefaultFile();
@@ -2783,6 +2813,7 @@ public partial class UI : Form, IDialogParent
             }
 
             UpdateMyShowsButtonStatus();
+            await FillEpGuideHtmlAsync();
         }
         if (tabControl1.SelectedTab == tbMyMovies)
         {
@@ -2794,6 +2825,7 @@ public partial class UI : Form, IDialogParent
             }
 
             UpdateMyMoviesButtonStatus();
+            await FillMovieGuideHtmlAsync();
         }
     }
 
@@ -3350,7 +3382,9 @@ public partial class UI : Form, IDialogParent
     {
         await mDoc.ForceRefreshShowsAsync(sis, unattended, WindowState == FormWindowState.Minimized, this, cts);
         await FillMyShowsAsync(true);
+        FillMyMovies();
         await FillEpGuideHtmlAsync();
+        await FillMovieGuideHtmlAsync();
         await RefreshWTWAsync(false, unattended);
     }
 
