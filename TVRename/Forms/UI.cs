@@ -11,7 +11,6 @@ using CefSharp;
 using CefSharp.WinForms;
 using Humanizer;
 using System.Runtime.InteropServices;
-using System.Windows.Threading;
 using TVRename.Forms.Supporting;
 using TVRename.Forms.Tools;
 using TVRename.Forms.Utilities;
@@ -2600,7 +2599,7 @@ public partial class UI : Form, IDialogParent
             await SaveCaches();
             if (!await SaveLayoutXmlAsync())
             {
-                Logger.Error("Failed to Save Layout Configuration Files");
+                Logger.Warn("Failed to Save Layout Configuration Files");
             }
         }
         catch (Exception ex)
@@ -2611,7 +2610,7 @@ public partial class UI : Form, IDialogParent
                 e2 = e2.InnerException;
             }
 
-            Logger.Error(e2, "Failed to Save Layout Configuration Files");
+            Logger.Warn(e2, "Failed to Save Layout Configuration Files");
             string m2 = e2.Message;
             MessageBox.Show(this,
                 ex.Message + "\r\n\r\n" +
@@ -2667,26 +2666,24 @@ public partial class UI : Form, IDialogParent
     private async void UpdateTimer_Tick(object sender, EventArgs e)
     {
         UpdateTimer.Stop();
+        ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
+        await this.Invoke(() => NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide));
+    }
 
-        Dispatcher uiDisp = Dispatcher.CurrentDispatcher;
-
+    private async Task<ServerRelease?> CheckForUpdates()
+    {
         ServerRelease? result = await VersionUpdater.CheckForUpdatesAsync().ConfigureAwait(false);
 
-        mDoc.CurrentAppState.UpdateLastCheckTime();
         try
         {
-            mDoc.CurrentAppState.SaveToDefaultFile();
+            mDoc.CurrentAppState.UpdateLastCheckTime();
         }
         catch (Exception ex)
         {
             Logger.Warn(ex, "Could not save app state file after update check!");
         }
 
-        await uiDisp.InvokeAsync(() => UpdateScheduleAsync());
-
-        await uiDisp.Invoke(() => NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide));
-
-        uiDisp.Invoke(() => InformUserOffline());
+        return result;
     }
 
     private void InformUserOffline()
@@ -4436,11 +4433,8 @@ public partial class UI : Form, IDialogParent
 
     private async void checkForNewVersionToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        Dispatcher uiDisp = Dispatcher.CurrentDispatcher;
-
-        ServerRelease? result = await VersionUpdater.CheckForUpdatesAsync().ConfigureAwait(false);
-
-        await uiDisp.Invoke(() => NotifyUpdatesAsync(result, true, false));
+        ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
+        await this.Invoke(() => NotifyUpdatesAsync(result, true, false));
     }
 
     private async Task NotifyUpdatesAsync(ServerRelease? update, bool manuallyTriggered, bool inSilentMode)
@@ -4505,12 +4499,8 @@ public partial class UI : Form, IDialogParent
     {
         btnUpdateAvailable.Visible = false;
 
-        Dispatcher uiDisp = Dispatcher.CurrentDispatcher;
-
-        Task<ServerRelease?> tuv = VersionUpdater.CheckForUpdatesAsync();
-        ServerRelease? result = await tuv.ConfigureAwait(false);
-
-        await uiDisp.Invoke(() => NotifyUpdatesAsync(result, true, false));
+        ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
+        await this.Invoke(() => NotifyUpdatesAsync(result, true, false));
     }
 
     private async void tmrPeriodicScan_Tick(object sender, EventArgs e) => await RunAutoScanAsync("Periodic Scan");
