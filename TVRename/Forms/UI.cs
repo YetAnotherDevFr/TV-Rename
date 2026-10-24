@@ -1041,12 +1041,33 @@ public partial class UI : Form, IDialogParent
         TriggerAppUpdateCheck();
 
         await Task.WhenAll(n, m);
+        await SetShowsInTabs();
 
         quickTimer.Start();
 
         if (TVSettings.Instance.RunOnStartUp())
         {
             await RunAutoScanAsync("Startup Scan");
+        }
+    }
+
+    private async Task SetShowsInTabs()
+    {
+        if (MyShowTree.SelectedNode is null)
+        {
+            var firstShow = mDoc.TvLibrary.GetSortedShows().FirstOrDefault();
+            if (firstShow != null)
+            {
+                await SelectShowAsync(firstShow);
+            }
+        }
+        if (movieTree.SelectedNode is null)
+        {
+            var firstMovie = mDoc.FilmLibrary.GetSortedMovies().FirstOrDefault();
+            if (firstMovie != null)
+            {
+                SelectMovie(firstMovie);
+            }
         }
     }
 
@@ -1058,9 +1079,9 @@ public partial class UI : Form, IDialogParent
                 return;
             case TVSettings.UpdateCheckMode.Interval:
                 {
-                    TimeSpan lastUpdate = mDoc.CurrentAppState.LastUpdate;
+                    TimeSpan? lastUpdate = mDoc.CurrentAppState?.LastUpdate;
                     TimeSpan interval = TVSettings.Instance.UpdateCheckInterval;
-                    if (lastUpdate >= interval)
+                    if (!lastUpdate.HasValue || lastUpdate >= interval)
                     {
                         UpdateTimer.Start();
                     }
@@ -1419,7 +1440,7 @@ public partial class UI : Form, IDialogParent
     {
         try
         {
-            if (mDoc.Dirty() && !mDoc.Args.Unattended && !mDoc.Args.Hide && !TVSettings.Instance.AutoSaveOnExit)
+            if (mDoc.Dirty() && !mDoc.Args.Unattended && !mDoc.Args.Hide && !TVSettings.Instance.AutoSaveOnExit && Environment.UserInteractive)
             {
                 DialogResult res = MessageBox.Show(
                     "Your changes have not been saved.  Do you wish to save before quitting?", "Unsaved data",
@@ -1442,7 +1463,7 @@ public partial class UI : Form, IDialogParent
                 }
             }
 
-            if (mDoc.Dirty() && (mDoc.Args.Unattended || mDoc.Args.Hide || TVSettings.Instance.AutoSaveOnExit))
+            if (mDoc.Dirty() && (mDoc.Args.Unattended || mDoc.Args.Hide || TVSettings.Instance.AutoSaveOnExit || !Environment.UserInteractive))
             {
                 //We have to assume that they wanted to save any settings
                 await mDoc.WriteXMLSettingsAsync();
@@ -2666,7 +2687,7 @@ public partial class UI : Form, IDialogParent
     {
         UpdateTimer.Stop();
         ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
-        await this.Invoke(() => NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide));
+        await this.Invoke(() => NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide ));
     }
 
     private async Task<ServerRelease?> CheckForUpdates()
@@ -2675,7 +2696,11 @@ public partial class UI : Form, IDialogParent
 
         try
         {
-            mDoc.CurrentAppState.UpdateLastCheckTime();
+            var x = mDoc.CurrentAppState;
+            if (x is not null)
+            {
+                await x.UpdateLastCheckTime();
+            }
         }
         catch (Exception ex)
         {
@@ -3364,8 +3389,7 @@ public partial class UI : Form, IDialogParent
         {
             await mDoc.MoviesAddedOrEditedAsync(aes.HasChanged, false, WindowState == FormWindowState.Minimized, this, si);
 
-            FillMyMovies();
-            SelectMovie(si);
+            FillMyMovies(si);
 
             Logger.Info($"Modified movie called {si.ShowName}");
         }

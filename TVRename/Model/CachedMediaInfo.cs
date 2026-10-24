@@ -258,6 +258,23 @@ public abstract class CachedMediaInfo(TVDoc.ProviderType source) : ISeriesSpecif
 
     public MediaConfiguration.MediaType Media => MediaType();
 
+    public string ProviderName
+    {
+        get
+        {
+            //Needs to match FileHelper.ExtractIdsFrom: tmdb|tvdb|tvmaze
+            return Source switch
+            {
+                TVDoc.ProviderType.TheTVDB => "tvdb",
+                TVDoc.ProviderType.TMDB => "tmdb",
+                TVDoc.ProviderType.TVmaze => "tvmaze",
+                _ => string.Empty
+            };
+        }
+    }
+
+    public int? ProviderCode => IdCode(Source);
+
     public int? TvMazeId => TvMazeCode;
 
     public int? TmdbId => TmdbCode;

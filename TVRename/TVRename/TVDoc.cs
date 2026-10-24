@@ -38,7 +38,7 @@ public class TVDoc : IDisposable, IAsyncDisposable
     public readonly MovieLibrary FilmLibrary;
     public readonly CommandLineArgs Args;
     internal readonly TVRenameStats CurrentStats;
-    internal readonly Settings.State CurrentAppState;
+    internal Settings.State? CurrentAppState;
     public readonly ItemList TheActionList;
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     internal readonly ActionEngine ActionManager;
@@ -87,16 +87,13 @@ public class TVDoc : IDisposable, IAsyncDisposable
             // not worried if stats loading fails
         }
 
-        try
-        {
-            CurrentAppState = Settings.State.LoadFromDefaultFile();
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn(ex, "Could not load app state file.");
-            CurrentAppState = new Settings.State();
-        }
         ActionManager = new ActionEngine(CurrentStats);
+    }
+
+
+    internal async Task LoadState()
+    {
+        CurrentAppState = await Settings.State.LoadFromDefaultFileAsync();
     }
 
     public TVRenameStats Stats()
@@ -577,12 +574,14 @@ public class TVDoc : IDisposable, IAsyncDisposable
         }
         catch (Exception e)
         {
+            if (Environment.UserInteractive){
             Logger.Error($"Complete failure to save {PathManager.TVDocSettingsFile.FullName}. {e.Message}");
             DialogResult dr = MessageBox.Show($"Could not save {PathManager.TVDocSettingsFile.Name} due to {e.Message}. Settings and configuration will be lost. Retry? ", "TV Rename",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Error);
-            if (dr != DialogResult.No)
-            {
-                await WriteXMLSettingsAsync();
+                if (dr != DialogResult.No)
+                {
+                    await WriteXMLSettingsAsync();
+                }
             }
         }
     }
@@ -1872,7 +1871,7 @@ public class TVDoc : IDisposable, IAsyncDisposable
         {
             string msg = $"Stopping 'Move Movies From' from '{downloadFolder}' as it is already a library folder. Either remove the folder from the library in Preferences or use 'Bulk Add' to add TV Shows into the library that are already copied to the library folders.";
             Logger.Warn(msg);
-            MessageBox.Show(msg, "Can't scan folder", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (Environment.UserInteractive) MessageBox.Show(msg, "Can't scan folder", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -2190,9 +2189,11 @@ public class TVDoc : IDisposable, IAsyncDisposable
         //If there are no LibraryFolders then we cant use the simplified UI
         if (TVSettings.Instance.LibraryFolders.Count + TVSettings.Instance.MovieLibraryFolders.Count == 0)
         {
-            MessageBox.Show(
-                "Please add some monitor (library) folders under 'Bulk Add TV Shows' to use the 'Auto Add' functionality (Alternatively you can add them or turn it off in settings).",
-                "Can't Auto Add Movie", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (Environment.UserInteractive){
+                MessageBox.Show(
+                    "Please add some monitor (library) folders under 'Bulk Add TV Shows' to use the 'Auto Add' functionality (Alternatively you can add them or turn it off in settings).",
+                    "Can't Auto Add Movie", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             return null;
         }
