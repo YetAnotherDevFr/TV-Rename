@@ -336,6 +336,8 @@ public class ShowConfiguration : MediaConfiguration
 
     private void SetupIgnoreRules(XElement xmlSettings)
     {
+        IgnoreSeasons.Clear();
+
         foreach (int seasonNumber in xmlSettings.Descendants("IgnoreSeasons").Descendants("Ignore").Select(ig => XmlConvert.ToInt32(ig.Value)).Distinct())
         {
             IgnoreSeasons.Add(seasonNumber);
@@ -674,15 +676,15 @@ public class ShowConfiguration : MediaConfiguration
         return seasonFolders;
     }
 
-    protected override async Task<Dictionary<int, SafeList<string>>> AllFolderLocationsAsync(bool manualToo, bool checkExist)
+    protected override async Task<Dictionary<int, List<string>>> AllFolderLocationsAsync(bool manualToo, bool checkExist)
     {
-        Dictionary<int, SafeList<string>> fld = [];
+        Dictionary<int, List<string>> fld = [];
 
         if (manualToo)
         {
             foreach (KeyValuePair<int, List<string>> kvp in ManualFolderLocations.ToList())
             {
-                if (!fld.TryGetValue(kvp.Key, out SafeList<string>? value))
+                if (!fld.TryGetValue(kvp.Key, out List<string>? value))
                 {
                     value = [];
                     fld[kvp.Key] = value;
@@ -716,14 +718,15 @@ public class ShowConfiguration : MediaConfiguration
                 }
 
                 //Now we can add the automated one
-                if (!fld.ContainsKey(i))
+                if (!fld.TryGetValue(i, out List<string>? value))
                 {
-                    fld[i] = [];
+                    value = [];
+                    fld[i] = value;
                 }
 
-                if (!fld[i].Contains(newName))
+                if (!value.Contains(newName))
                 {
-                    fld[i].Add(newName.TrimSlash());
+                    value.Add(newName.TrimSlash());
                 }
             }
         }
@@ -914,7 +917,7 @@ public class ShowConfiguration : MediaConfiguration
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException("Order", $"GenerateEpisodes: si has invalid Order {Order}");
+                throw new ArgumentException($"GenerateEpisodes: si has invalid Order {Order}");
         }
 
         if (CountSpecials && AppropriateSeasons().ContainsKey(0) && !TVSettings.Instance.IgnoreAllSpecials)
@@ -1316,7 +1319,7 @@ public class ShowConfiguration : MediaConfiguration
 
     internal List<List<ProcessedEpisode>> GetSortedSeasons() => EpisodeCaches.SeasonEpisodes.OrderBy(v => v.Key).Select(v => v.Value).ToList();
 
-    internal async Task<Dictionary<int, SafeList<string>>> AllFolderLocationsEpCheckAsync(bool checkDirectoryExist)
+    internal async Task<Dictionary<int, List<string>>> AllFolderLocationsEpCheckAsync(bool checkDirectoryExist)
     {
         return await AllFolderLocationsAsync(true, checkDirectoryExist);
     }

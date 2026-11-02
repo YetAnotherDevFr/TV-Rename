@@ -19,7 +19,7 @@ internal class CheckAllFoldersExist(TVDoc doc) : ScanShowActivity(doc)
             return; // skip
         }
 
-        Dictionary<int, SafeList<string>> flocs = await si.AllProposedFolderLocationsAsync();
+        Dictionary<int, List<string>> flocs = await si.AllProposedFolderLocationsAsync();
 
         List<string> ignoredLocations = [];
 
@@ -43,9 +43,9 @@ internal class CheckAllFoldersExist(TVDoc doc) : ScanShowActivity(doc)
                 continue;
             }
 
-            SafeList<string> folders = [];
+            List<string> folders = [];
 
-            if (flocs.TryGetValue(snum, out SafeList<string>? floc))
+            if (flocs.TryGetValue(snum, out List<string>? floc))
             {
                 folders = floc;
             }
@@ -209,12 +209,13 @@ internal class CheckAllFoldersExist(TVDoc doc) : ScanShowActivity(doc)
         if (di.Exists &&
             !string.Equals(si.AutoFolderNameForSeason(snum), folder, StringComparison.CurrentCultureIgnoreCase))
         {
-            if (!si.ManualFolderLocations.ContainsKey(snum))
+            if (!si.ManualFolderLocations.TryGetValue(snum, out List<string>? value))
             {
-                si.ManualFolderLocations[snum] = [];
+                value = [];
+                si.ManualFolderLocations[snum] = value;
             }
 
-            si.ManualFolderLocations[snum].Add(folder);
+            value.Add(folder);
             Doc.SetDirty();
         }
 

@@ -144,7 +144,7 @@ public class CacheUpdater : IDisposable, IAsyncDisposable
         mDownloaderThread = null;
     }
 
-    private async Task GetThreadAsync(ISeriesSpecifier series, IProgress<DownloadProgressReport>? p, CancellationToken cts, ThreadSafeCounter counter, int totalCount)
+    private async Task GetThreadAsync(ISeriesSpecifier series, IProgress<DownloadProgressReport>? p, ThreadSafeCounter counter, int totalCount, CancellationToken cts)
     {
         try
         {
@@ -212,7 +212,7 @@ public class CacheUpdater : IDisposable, IAsyncDisposable
 
             await Task.WhenAll(tvdbTask, tmdbTask, tvmazeTask);
 
-            if (tvdbTask.Result == false || tmdbTask.Result == false || tvmazeTask.Result == false) //one of the downloads that was needed failed, so we can't continue
+            if (await tvdbTask == false || await tmdbTask == false || await tvmazeTask == false) //one of the downloads that was needed failed, so we can't continue
             {
                 downloadOk = false;
                 return;
@@ -244,7 +244,7 @@ public class CacheUpdater : IDisposable, IAsyncDisposable
                 async (series, token) =>
                 {
 
-                    await GetThreadAsync(series, p, cts,counter,totalCount);
+                    await GetThreadAsync(series, p, counter, totalCount, cts);
                 }).ConfigureAwait(false);
 
             if (!cts.IsCancellationRequested)
@@ -263,7 +263,7 @@ public class CacheUpdater : IDisposable, IAsyncDisposable
         catch (TaskCanceledException tce)
         {
             downloadOk = false;
-            Logger.Warn(tce);
+            Logger.Warn(tce,"Download Task was cancelled mid execution");
         }
         catch (Exception e)
         {
@@ -322,15 +322,13 @@ public class CacheUpdater : IDisposable, IAsyncDisposable
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
         await DownloadThreadAsync();
-        Dispose(true);
-    }
-    private void Dispose(bool disposing)
-    {
+        GC.SuppressFinalize(this);
         Dispose();
     }
 
     public void Dispose()
     {
+        // Ensure finalizer is suppressed
         GC.SuppressFinalize(this);
     }
 

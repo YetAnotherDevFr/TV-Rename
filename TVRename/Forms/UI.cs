@@ -170,7 +170,7 @@ public partial class UI : Form, IDialogParent
             {
                 button.UseVisualStyleBackColor = true;
             }
-            else if (c is TabControl tabcontrol)
+            else if (c is TabControl _)
             {
 
             }
@@ -2281,17 +2281,17 @@ public partial class UI : Form, IDialogParent
 
         if (ep != null)
         {
-            Dictionary<int, SafeList<string>> afl = await ep.Show.AllExistngFolderLocationsAsync();
-            if (afl.TryGetValue(ep.AppropriateSeasonNumber, out SafeList<string>? folder))
+            Dictionary<int, List<string>> afl = await ep.Show.AllExistngFolderLocationsAsync();
+            if (afl.TryGetValue(ep.AppropriateSeasonNumber, out List<string>? folder))
             {
                 AddFolders(folder, added);
             }
         }
         else if (seas != null && si is not null)
         {
-            Dictionary<int, SafeList<string>>? folders = await si.AllExistngFolderLocationsAsync();
+            Dictionary<int, List<string>>? folders = await si.AllExistngFolderLocationsAsync();
 
-            if (folders?.TryGetValue(seas.SeasonNumber, out SafeList<string>? folder) is true)
+            if (folders?.TryGetValue(seas.SeasonNumber, out List<string>? folder) is true)
             {
                 AddFolders(folder, added);
             }
@@ -2709,7 +2709,7 @@ public partial class UI : Form, IDialogParent
     {
         UpdateTimer.Stop();
         ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
-        await this.Invoke(() => NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide ));
+        await this.Invoke(async () => await NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide));
     }
 
     private async Task<ServerRelease?> CheckForUpdates()
@@ -3763,7 +3763,7 @@ public partial class UI : Form, IDialogParent
             return string.Empty;
         }
 
-        Dictionary<int, SafeList<string>> folders = await currentShow.AllExistngFolderLocationsAsync();
+        Dictionary<int, List<string>> folders = await currentShow.AllExistngFolderLocationsAsync();
         foreach (string folder in folders
             .Values
             .SelectMany(list => list)
@@ -4479,7 +4479,7 @@ public partial class UI : Form, IDialogParent
     private async void checkForNewVersionToolStripMenuItem_Click(object sender, EventArgs e)
     {
         ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
-        await this.Invoke(() => NotifyUpdatesAsync(result, true, false));
+        await this.Invoke(async () => await NotifyUpdatesAsync(result, true, false));
     }
 
     private async Task NotifyUpdatesAsync(ServerRelease? update, bool manuallyTriggered, bool inSilentMode)
@@ -4545,7 +4545,7 @@ public partial class UI : Form, IDialogParent
         btnUpdateAvailable.Visible = false;
 
         ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
-        await this.Invoke(() => NotifyUpdatesAsync(result, true, false));
+        await this.Invoke(async () => await NotifyUpdatesAsync(result, true, false));
     }
 
     private async void tmrPeriodicScan_Tick(object sender, EventArgs e) => await RunAutoScanAsync("Periodic Scan");

@@ -21,7 +21,7 @@ public class BulkAddSeriesManager(TVDoc doc)
     public FolderMonitorEntryList AddItems = [];
     private readonly TVDoc mDoc = doc;
 
-    public async Task GuessShowItemAsync(PossibleNewTvShow ai, ShowLibrary library, bool showErrorMsgBox)
+    public static async Task GuessShowItemAsync(PossibleNewTvShow ai, ShowLibrary library, bool showErrorMsgBox)
     {
         IPossibleTVShowIdentifier[] identifiers =
             [
@@ -40,7 +40,7 @@ public class BulkAddSeriesManager(TVDoc doc)
                     ai.UpdateId(code, type);
                     Logger.Info($"BULK ADD AUTO ID: identified {ai.Name} ({ai.FolderName}) based on {identifier.GetType().Name} which we looked up to get {code}");
 
-                    CachedSeriesInfo? cachedSeries = await mDoc.UpdatePossibleShow(ai, showErrorMsgBox);
+                    CachedSeriesInfo? cachedSeries = await TVDoc.UpdatePossibleShow(ai, showErrorMsgBox);
                     if (cachedSeries != null)
                     {
                         ai.UpdateId(code, type); //Update again as the name is now known
@@ -186,8 +186,8 @@ public class BulkAddSeriesManager(TVDoc doc)
 
         if (si.UsesManualFolders())
         {
-            Dictionary<int, SafeList<string>> afl = await si.AllExistngFolderLocationsAsync();
-            foreach (KeyValuePair<int, SafeList<string>> kvp in afl)
+            Dictionary<int, List<string>> afl = await si.AllExistngFolderLocationsAsync();
+            foreach (KeyValuePair<int, List<string>> kvp in afl)
             {
                 foreach (string folder in kvp.Value)
                 {

@@ -997,7 +997,7 @@ public class TVDoc : IDisposable, IAsyncDisposable
     private async Task UpdateMediaToScanAsync(ScanSettings settings)
     {
         //Get the default set of shows defined by the specified type
-        List<ShowConfiguration> shows = (await GetShowListAsync(settings.Type, settings.Media, settings.Shows)).ToList();
+        List<ShowConfiguration> shows = [.. await GetShowListAsync(settings.Type, settings.Media, settings.Shows)];
         //Get the default set of shows defined by the specified type
         List<MovieConfiguration> movies = [.. GetMovieList(settings.Type, settings.Media, settings.Movies)];
 
@@ -1152,8 +1152,16 @@ public class TVDoc : IDisposable, IAsyncDisposable
         progress?.Report(new TaskProgress(c.Increment(), "Force Update Movie Images: " + si.ShowName));
 
         // process each folder for each movie...
-        foreach (FileInfo? file in (await si.MovieFilesAsync()))
+        IEnumerable<FileInfo> movieFiles = await si.MovieFilesAsync();
+
+        foreach (FileInfo? file in movieFiles)
         {
+            if (token.IsCancellationRequested)
+            {
+                Logger.Warn("ForceUpdateImagesAsync cancelled");
+                return;
+            }
+
             TheActionList.Add(await
                 downloadIdentifiers.ForceUpdateMovieAsync(DownloadIdentifier.DownloadType.downloadImage, si, file));
 
@@ -1166,7 +1174,7 @@ public class TVDoc : IDisposable, IAsyncDisposable
         Logger.Info("Force Update Images: " + si.ShowName);
         progress?.Report(new TaskProgress(c.Increment(), "Force Update TV Images: " + si.ShowName));
 
-        Dictionary<int, SafeList<string>> allFolders = await si.AllExistngFolderLocationsAsync();
+        Dictionary<int, List<string>> allFolders = await si.AllExistngFolderLocationsAsync();
 
         if (!string.IsNullOrEmpty(si.AutoAddFolderBase) && allFolders.IsAny())
         {
@@ -1180,7 +1188,13 @@ public class TVDoc : IDisposable, IAsyncDisposable
         // process each folder for each season...
         foreach (int snum in si.GetSeasonKeys())
         {
-            if (si.IgnoreSeasons.Contains(snum) || !allFolders.TryGetValue(snum, out SafeList<string>? folders))
+            if (token.IsCancellationRequested)
+            {
+                Logger.Warn("ForceUpdateImagesAsync cancelled");
+                return;
+            }
+
+            if (si.IgnoreSeasons.Contains(snum) || !allFolders.TryGetValue(snum, out List<string>? folders))
             {
                 continue; // ignore/skip this season
             }
@@ -2397,7 +2411,7 @@ public class TVDoc : IDisposable, IAsyncDisposable
         return found;
     }
 
-    internal async Task<CachedSeriesInfo?> UpdatePossibleShow(PossibleNewTvShow ai, bool showErrorMsgBox)
+    internal static async Task<CachedSeriesInfo?> UpdatePossibleShow(PossibleNewTvShow ai, bool showErrorMsgBox)
     {
         ProviderType type = ai.Provider;
         int? code = ai.ProviderCode;

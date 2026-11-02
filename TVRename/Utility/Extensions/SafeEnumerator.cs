@@ -34,13 +34,13 @@ public class SafeEnumerator<T> : IEnumerator<T>
 
     object? IEnumerator.Current => Current;
 
-    public void Dispose()
+    void IDisposable.Dispose()
     {
         // .. and exiting lock on Dispose()
         // This will be called when foreach loop finishes
         try
         {
-            // No-op, just to ensure finally always runs
+            GC.SuppressFinalize(this);
         }
         finally
         {
