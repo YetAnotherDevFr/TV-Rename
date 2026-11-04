@@ -100,7 +100,7 @@ public class LocalCache : MediaCache, IMovieSource, ITVSource
 
     /// <exception cref="SourceConsistencyException">Condition.</exception>
     /// <exception cref="MediaNotFoundException">Condition.</exception>
-    public override async Task<bool> EnsureUpdatedAsync(ISeriesSpecifier s, bool bannersToo, bool showErrorMsgBox, ThreadSafeCounter counter, int totalCount)
+    public override async Task<bool> EnsureUpdatedAsync(ISeriesSpecifier s, bool bannersToo, bool showErrorMsgBox, ThreadSafeCounter counter, int totalCount, CancellationToken token)
     {
         if (s.Provider != TVDoc.ProviderType.TMDB)
         {
@@ -966,7 +966,7 @@ public class LocalCache : MediaCache, IMovieSource, ITVSource
     /// <exception cref="SourceConnectivityException">Condition.</exception>
     /// <exception cref="GeneralHttpException">Condition.</exception>
     public override async Task SearchAsync(string text, bool showErrorMsgBox, MediaConfiguration.MediaType type,
-        Locale locale)
+        Locale locale, CancellationToken token)
     {
         if (text.IsNumeric())
         {
@@ -1302,7 +1302,6 @@ public class LocalCache : MediaCache, IMovieSource, ITVSource
 
         try
         {
-            //todo set parallel cancellation source
             await Parallel.ForEachAsync(
                 FullMovies(),
                 new ParallelOptions { MaxDegreeOfParallelism = TVSettings.Instance.ParallelDownloads, CancellationToken = token },
