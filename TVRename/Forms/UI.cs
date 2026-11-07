@@ -1039,8 +1039,7 @@ public partial class UI : Form, IDialogParent
             BGDownloadTimer.Start();
         }
 
-        TriggerAppUpdateCheck();
-
+        await TriggerAppUpdateCheckAsync();
         await Task.WhenAll(n, m);
         await SetShowsInTabs();
 
@@ -1072,7 +1071,7 @@ public partial class UI : Form, IDialogParent
         }
     }
 
-    private void TriggerAppUpdateCheck()
+    private async Task TriggerAppUpdateCheckAsync()
     {
         switch (TVSettings.Instance.UpdateCheckType)
         {
@@ -1084,18 +1083,18 @@ public partial class UI : Form, IDialogParent
                     TimeSpan interval = TVSettings.Instance.UpdateCheckInterval;
                     if (!lastUpdate.HasValue || lastUpdate >= interval)
                     {
-                        UpdateTimer.Start();
+                        await DoAppUpdateCheckAsync();
                     }
                     return;
                 }
             case TVSettings.UpdateCheckMode.Everytime:
                 {
-                    UpdateTimer.Start();
+                    await DoAppUpdateCheckAsync();
                     return;
                 }
             default:
                 {
-                    UpdateTimer.Start();
+                    await DoAppUpdateCheckAsync();
                     return;
                 }
         }
@@ -1503,10 +1502,8 @@ public partial class UI : Form, IDialogParent
 
             mAutoFolderMonitor?.Dispose();
             BGDownloadTimer.Dispose();
-            UpdateTimer.Dispose();
             quickTimer.Dispose();
             refreshWTWTimer.Dispose();
-            statusTimer.Dispose();
 
             // Dispose shutdown manager
             if (_shutdownManager != null)
@@ -2125,7 +2122,7 @@ public partial class UI : Form, IDialogParent
         if (next1.IsAny())
         {
             ProcessedEpisode ei = next1.First();
-            tsNextShowTxt.Text += $"{CustomEpisodeName.NameForNoExt(ei, CustomEpisodeName.OldNStyle(1))}, {ei.HowLong()} ({ei.DayOfWeek()}, {ei.TimeOfDay()})".ToUiVersion();
+            tsNextShowTxt.Text += $"{CustomEpisodeName.NameForNoExt(ei, CustomEpisodeName.OldNStyle(1), TargetType.Filename)}, {ei.HowLong()} ({ei.DayOfWeek()}, {ei.TimeOfDay()})".ToUiVersion();
         }
         else
         {
@@ -2720,11 +2717,11 @@ public partial class UI : Form, IDialogParent
         }
     }
 
-    private async void UpdateTimer_Tick(object sender, EventArgs e)
+    private async Task DoAppUpdateCheckAsync()
     {
-        UpdateTimer.Stop();
         ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
-        await this.Invoke(async () => await NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide));
+        this.SafeInvoke(async ()
+            => await NotifyUpdatesAsync(result, false, mDoc.Args.Unattended || mDoc.Args.Hide), true);
     }
 
     private async Task<ServerRelease?> CheckForUpdates()
@@ -2987,15 +2984,14 @@ public partial class UI : Form, IDialogParent
 
     private static string PostpendTheIfNeeded(string name)
     {
-        if (TVSettings.Instance.PostpendThe && name.StartsWith("The ", StringComparison.Ordinal))
+        if (!TVSettings.Instance.PostpendThe)
         {
-            return name.RemoveFirst(4) + ", The";
+            return name;
         }
-
-        return name;
+        return TVSettings.Instance.PostpendTerms(name);
     }
 
-    private static string GenerateBestName(CachedSeriesInfo? ser, ShowConfiguration? si)
+     private static string GenerateBestName(CachedSeriesInfo? ser, ShowConfiguration? si)
     {
         string? name = si?.ShowName;
 
@@ -4500,7 +4496,8 @@ public partial class UI : Form, IDialogParent
     private async void checkForNewVersionToolStripMenuItem_Click(object sender, EventArgs e)
     {
         ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
-        await this.Invoke(async () => await NotifyUpdatesAsync(result, true, false));
+        this.SafeInvoke(async ()
+            => await NotifyUpdatesAsync(result, true, false), true);
     }
 
     private async Task NotifyUpdatesAsync(ServerRelease? update, bool manuallyTriggered, bool inSilentMode)
@@ -4564,9 +4561,9 @@ public partial class UI : Form, IDialogParent
     private async void btnUpdateAvailable_Click(object sender, EventArgs e)
     {
         btnUpdateAvailable.Visible = false;
-
         ServerRelease? result = await CheckForUpdates().ConfigureAwait(false);
-        await this.Invoke(async () => await NotifyUpdatesAsync(result, true, false));
+        this.SafeInvoke(async () 
+            => await NotifyUpdatesAsync(result, true, false),true);
     }
 
     private async void tmrPeriodicScan_Tick(object sender, EventArgs e) => await RunAutoScanAsync("Periodic Scan");
