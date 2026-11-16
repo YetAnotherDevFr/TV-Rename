@@ -265,14 +265,14 @@ public sealed class TVSettings
 
     public string unwantedRSSSearchTermsString = "hdcam;tscam;CAMRip;HDCAM;HDTS";
 
-    public string[] PreferredRSSSearchTerms() => Convert(preferredRSSSearchTermsString);
-    public string[] UnwantedRSSSearchTerms() => Convert(unwantedRSSSearchTermsString);
+    public IEnumerable<string> PreferredRSSSearchTerms() => Convert(preferredRSSSearchTermsString);
+    public IEnumerable<string> UnwantedRSSSearchTerms() => Convert(unwantedRSSSearchTermsString);
 
     public string OtherExtensionsString;
 
     private IEnumerable<string> OtherExtensionsArray => Convert(OtherExtensionsString);
 
-    private static string[] Convert(string? propertyString) => propertyString.FromScsv().ToArray();
+    private static IEnumerable<string> Convert(string? propertyString) =>  propertyString.FromScsv();
 
     internal bool IncludeBetaUpdates() => mode == BetaMode.BetaToo;
 
@@ -299,7 +299,7 @@ public sealed class TVSettings
     public bool HideWtWSpoilers = false;
     public bool HideMyShowsSpoilers = false;
     public bool ShowInTaskbar = true;
-    public string Theme = ThemeManager.LIGHT;
+    public string Theme = ThemeManager.WINDOWS;
     public bool ShowAccessibilityOptions = false;
     public bool AutoSearchForDownloadedFiles = false;
     public string SpecialsFolderName = "Specials";
@@ -317,7 +317,7 @@ public sealed class TVSettings
     public string SearchJSONFileSizeToken = "size_bytes";
     public string SearchJSONSeedersToken = "seeds";
 
-    public string[] VideoExtensionsArray => Convert(VideoExtensionsString);
+    public IEnumerable<string> VideoExtensionsArray => Convert(VideoExtensionsString);
 
     public static string USER_AGENT =>
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36";
@@ -1360,7 +1360,7 @@ public sealed class TVSettings
         LeadingZeroOnSeason = xmlSettings.ExtractBool("LeadingZeroOnSeason", false);
         ShowAccessibilityOptions = xmlSettings.ExtractBool("ShowAccessibilityOptions", false);
         ShowInTaskbar = xmlSettings.ExtractBool("ShowInTaskbar", true);
-        Theme = xmlSettings.ExtractString("Theme", ThemeManager.LIGHT);
+        Theme = xmlSettings.ExtractString("Theme", ThemeManager.WINDOWS);
         RenameTxtToSub = xmlSettings.ExtractBool("RenameTxtToSub", false);
         ShowEpisodePictures = xmlSettings.ExtractBool("ShowEpisodePictures", true);
         HideWtWSpoilers = xmlSettings.ExtractBool("HideWtWSpoilers", false);

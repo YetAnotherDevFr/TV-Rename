@@ -242,7 +242,7 @@ internal static class FinderHelper
         return hint2;
     }
 
-    public static List<T> RemoveShortShows<T>(IReadOnlyCollection<T> matchingShows)
+    public static List<T> RemoveShortShows<T>(List<T> matchingShows)
         where T : MediaConfiguration
     {
         //Remove any shows from the list that are subsets of all the ohters
@@ -528,7 +528,7 @@ internal static class FinderHelper
         {
             if (Environment.UserInteractive)
             {
-                MessageBox.Show(
+                Forms.ThemeableMessageBox.Show(
                     "Please add some monitor (library) folders under 'Bulk Add TV Shows' to use the 'Auto Add' functionality (Alternatively you can add them or turn it off in settings).",
                     "Can't Auto Add Media", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

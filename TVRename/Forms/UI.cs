@@ -498,6 +498,7 @@ public partial class UI : Form, IDialogParent
         return source;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance", Justification = "<Pending>")]
     private static object GroupFolderTitleDelegate(object rowObject)
     {
         Item? ep = (Item?)rowObject;
@@ -526,6 +527,7 @@ public partial class UI : Form, IDialogParent
         return destFolder;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance", Justification = "<Pending>")]
     private static object GroupSeasonKeyDelegate(object rowObject)
     {
         Item ep = (Item)rowObject;
@@ -542,6 +544,7 @@ public partial class UI : Form, IDialogParent
         return string.Empty;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance", Justification = "<Pending>")]
     private static object GroupWTWSeasonKeyDelegate(object rowObject)
     {
         ProcessedEpisode ep = (ProcessedEpisode)rowObject;
@@ -587,6 +590,7 @@ public partial class UI : Form, IDialogParent
         return episodeTime.Value.ToString("yyyy");
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance", Justification = "<Pending>")]
     private static object? GroupDateKeyDelegate(object rowObject)
     {
         DateTime? episodeTime = ((Item)rowObject).AirDate;
@@ -622,6 +626,7 @@ public partial class UI : Form, IDialogParent
         return new DateTime(episodeTime.Value.Year, 1, 1);
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance", Justification = "<Pending>")]
     private static object? GroupWTWDateKeyDelegate(object rowObject)
     {
         DateTime? episodeTime = ((ProcessedEpisode)rowObject).GetAirDateDt();
@@ -705,6 +710,7 @@ public partial class UI : Form, IDialogParent
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance", Justification = "<Pending>")]
     private static object GroupItemsKeyDelegate(object rowObject)
     {
         Item i = (Item)rowObject;
@@ -1162,7 +1168,7 @@ public partial class UI : Form, IDialogParent
     {
         if (IsBusyDoingBackgroundDownload)
         {
-            MessageBox.Show("Can't refresh until background download is complete");
+            ThemeableMessageBox.Show("Can't refresh until background download is complete");
             return;
         }
 
@@ -1188,11 +1194,11 @@ public partial class UI : Form, IDialogParent
     {
         if (IsBusyDoingBackgroundDownload)
         {
-            MessageBox.Show("Can't refresh until background download is complete");
+            ThemeableMessageBox.Show("Can't refresh until background download is complete");
             return;
         }
 
-        DialogResult res = MessageBox.Show(
+        DialogResult res = ThemeableMessageBox.Show(
             "Are you sure you want to remove all " +
             "locally stored TheTVDB, TMDB and TV Maze information?  This information will have to be downloaded again.  You " +
             "can force the refresh of a single show by holding down the \"Control\" key while clicking on " +
@@ -1445,7 +1451,7 @@ public partial class UI : Form, IDialogParent
         {
             if (mDoc.Dirty() && !mDoc.Args.Unattended && !mDoc.Args.Hide && !TVSettings.Instance.AutoSaveOnExit && Environment.UserInteractive)
             {
-                DialogResult res = MessageBox.Show(
+                DialogResult res = ThemeableMessageBox.Show(
                     "Your changes have not been saved.  Do you wish to save before quitting?", "Unsaved data",
                     MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
 
@@ -1462,7 +1468,7 @@ public partial class UI : Form, IDialogParent
                         break;
 
                     default:
-                        throw new NotSupportedException($"UI_FormClosing: MessageBox.Show returned invalid resullt {res}");
+                        throw new NotSupportedException($"UI_FormClosing: ThemeableMessageBox.Show returned invalid result {res}");
                 }
             }
 
@@ -1497,7 +1503,7 @@ public partial class UI : Form, IDialogParent
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message + "\r\n\r\n" + ex.StackTrace, "Form Closing Error",
+            ThemeableMessageBox.Show(this, ex.Message + "\r\n\r\n" + ex.StackTrace, "Form Closing Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         Cursor = Cursors.Default;
@@ -2609,6 +2615,8 @@ public partial class UI : Form, IDialogParent
         mDoc.PreventAutoScan("Preferences are open");
 
         Preferences pref = new(mDoc, scanOptions, CurrentlySelectedSeason());
+        await pref.InitialiseAsync();
+
         if (pref.ShowDialog(this) == DialogResult.OK)
         {
             mDoc.SetDirty();
@@ -2648,7 +2656,7 @@ public partial class UI : Form, IDialogParent
 
             Logger.Warn(e2, "Failed to Save Layout Configuration Files");
             string m2 = e2.Message;
-            MessageBox.Show(this,
+            ThemeableMessageBox.Show(this,
                 ex.Message + "\r\n\r\n" +
                 m2 + "\r\n\r\n" +
                 ex.StackTrace,
@@ -2768,7 +2776,7 @@ public partial class UI : Form, IDialogParent
     {
         if (TVSettings.Instance.OfflineMode)
         {
-            DialogResult res = MessageBox.Show("Ignore offline mode and download anyway?",
+            DialogResult res = ThemeableMessageBox.Show("Ignore offline mode and download anyway?",
                 "Background Download", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (res != DialogResult.Yes)
@@ -2825,7 +2833,7 @@ public partial class UI : Form, IDialogParent
     {
         if (!TVSettings.Instance.OfflineMode)
         {
-            if (MessageBox.Show("Are you sure you wish to go offline?", "TV Rename", MessageBoxButtons.YesNo,
+            if (ThemeableMessageBox.Show("Are you sure you wish to go offline?", "TV Rename", MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning) == DialogResult.No)
             {
                 return;
@@ -3166,7 +3174,7 @@ public partial class UI : Form, IDialogParent
 
     private async Task DeleteShowAsync(ShowConfiguration si)
     {
-        DialogResult res = MessageBox.Show(
+        DialogResult res = ThemeableMessageBox.Show(
             $"Remove show {si.ShowName.InDoubleQuotes()}.  Are you sure?", "Confirmation", MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
 
@@ -3216,7 +3224,7 @@ public partial class UI : Form, IDialogParent
             return;
         }
 
-        DialogResult res3 = MessageBox.Show(
+        DialogResult res3 = ThemeableMessageBox.Show(
             $"Remove folder {folderName.InDoubleQuotes()} from disk?",
             "Confirmation",
             MessageBoxButtons.YesNo,
@@ -3244,7 +3252,7 @@ public partial class UI : Form, IDialogParent
             {
                 string otherFilesDetails = showsthatmatchanyfiles.Select(m => $"{m.Item1.ShowName}:[{m.Item2}]").ToCsv();
 
-                DialogResult res1 = MessageBox.Show(
+                DialogResult res1 = ThemeableMessageBox.Show(
                     $"Do you want to remove {folderName}?  It contains files that match other shows {otherFilesDetails}",
                     "Confirmation",
                     MessageBoxButtons.YesNo,
@@ -3266,7 +3274,7 @@ public partial class UI : Form, IDialogParent
             if (moviesthatmatchanyfiles.IsAny())
             {
                 string otherFilesDetails = moviesthatmatchanyfiles.Select(m => $"{m.Item1.ShowName}:[{m.Item2}]").ToCsv();
-                DialogResult res2 = MessageBox.Show(
+                DialogResult res2 = ThemeableMessageBox.Show(
                     $"Do you want to remove {folderName}?  It contains files that match other movies {otherFilesDetails}",
                     "Confirmation",
                     MessageBoxButtons.YesNo,
@@ -3303,7 +3311,7 @@ public partial class UI : Form, IDialogParent
 
     private async Task DeleteMovieAsync(MovieConfiguration si)
     {
-        DialogResult res = MessageBox.Show(
+        DialogResult res = ThemeableMessageBox.Show(
             $"Remove movie {si.ShowName.InDoubleQuotes()}.  Are you sure?", "Confirmation", MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
 
@@ -3928,7 +3936,7 @@ public partial class UI : Form, IDialogParent
                 ? $"Shows with Id {mDoc.ShowProblems.Select(exception => exception.Media.ToString()).ToCsv()} are not found on TVDB, TMDB and TVMaze. Please update them"
                 : $"Show with {mDoc.ShowProblems.First().ShowIdProvider.PrettyPrint()} Id {mDoc.ShowProblems.First().Media.IdFor(mDoc.ShowProblems.First().Media.Provider)} is not found on {(mDoc.ShowProblems.First().ErrorProvider.PrettyPrint())}. Please Update";
 
-            DialogResult result = MessageBox.Show(message, "Series/Show No Longer Found", MessageBoxButtons.OKCancel,
+            DialogResult result = ThemeableMessageBox.Show(message, "Series/Show No Longer Found", MessageBoxButtons.OKCancel,
                 MessageBoxIcon.Error);
 
             if (result == DialogResult.Cancel)
@@ -3940,7 +3948,7 @@ public partial class UI : Form, IDialogParent
             {
                 if (mDoc.ShowProblems.Count() > 1)
                 {
-                    MessageBox.Show(problem.Message, "Issue With Series Setup", MessageBoxButtons.OK,
+                    ThemeableMessageBox.Show(problem.Message, "Issue With Series Setup", MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }
 
@@ -3960,7 +3968,7 @@ public partial class UI : Form, IDialogParent
                 ? $"Movies with Id {string.Join(",", mDoc.MovieProblems.Select(exception => exception.Media.ToString()))} are not found on TVDB, TMDB and TVMaze. Please update them"
                 : $"Movie with {(mDoc.MovieProblems.First().ShowIdProvider.PrettyPrint())} Id {mDoc.MovieProblems.First().Media} is not found on {(mDoc.MovieProblems.First().ErrorProvider.PrettyPrint())}. Please Update";
 
-            DialogResult result = MessageBox.Show(message, "Movie No Longer Found", MessageBoxButtons.OKCancel,
+            DialogResult result = ThemeableMessageBox.Show(message, "Movie No Longer Found", MessageBoxButtons.OKCancel,
                 MessageBoxIcon.Error);
 
             if (result == DialogResult.Cancel)
@@ -3972,7 +3980,7 @@ public partial class UI : Form, IDialogParent
             {
                 if (mDoc.MovieProblems.Count() > 1)
                 {
-                    MessageBox.Show(problem.Message, "Issue With Movie Setup", MessageBoxButtons.OK,
+                    ThemeableMessageBox.Show(problem.Message, "Issue With Movie Setup", MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }
 
@@ -3987,6 +3995,7 @@ public partial class UI : Form, IDialogParent
         mDoc.ClearCacheUpdateProblems();
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance", Justification = "<Pending>")]
     private static object ActionImageGetter(object rowObject)
     {
         Item s = (Item)rowObject;
@@ -4490,7 +4499,7 @@ public partial class UI : Form, IDialogParent
         {
             if (manuallyTriggered)
             {
-                MessageBox.Show(@"There is no update available please try again later.", @"No update available",
+                ThemeableMessageBox.Show(@"There is no update available please try again later.", @"No update available",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             return;
@@ -4879,8 +4888,7 @@ public partial class UI : Form, IDialogParent
         lvWhenToWatch.SetObjects(recentEps, true);
         lvWhenToWatch.Refresh();
 
-        List<DateTime> bolded = recentEps.Select(ei => ei.GetAirDateDt()).OfType<DateTime>().ToList();
-        calCalendar.BoldedDates = [.. bolded];
+        calCalendar.BoldedDates = [.. recentEps.Select(ei => ei.GetAirDateDt()).OfType<DateTime>()];
 
         UpdateToolstripWTW();
 
@@ -4906,6 +4914,7 @@ public partial class UI : Form, IDialogParent
 
     private async Task UpdateIconsAsync(DirFilesCache dfc)
     {
+        //We use icons from https://icons8.com/icons/all--size-small in general as they are 16x16 in general
 
         var options = new ParallelOptions
         {

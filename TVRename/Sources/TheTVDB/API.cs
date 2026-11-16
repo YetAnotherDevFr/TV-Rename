@@ -151,8 +151,7 @@ public static class API
 
             if (showConnectionIssues && Environment.UserInteractive)
             {
-                MessageBox.Show(msg, "Error obtaining updates from TVDB", MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                Forms.ThemeableMessageBox.Show(msg, "Error obtaining updates from TVDB", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
             return null;
@@ -788,6 +787,7 @@ public static class API
             Network = (string?)r["network"],
             Status = (string?)r["status"],
             IsSearchResultOnly = searchResult,
+            Placeholder = false,
             SeasonOrderType = st,
             ShowLanguage = (string?)r["primary_language"],
             Country = (string?)r["country"],
@@ -832,6 +832,7 @@ public static class API
             TmdbCode = GetExternalIdSearchResult(r, "TheMovieDB.com")?.ToInt(),
             Genres = r["genres"]?.ToObject<string[]>()?.ToSafeList() ?? [],
             Network = r["studios"]?.ToObject<string[]>()?.ToPsv() ?? string.Empty,
+            Placeholder = false
         };
 
         AddDirector(r, si);
@@ -1215,6 +1216,7 @@ public static class API
             InstagramId = GetExternalId(r, "Instagram"),
             TwitterId = GetExternalId(r, "Twitter"),
             Dirty = false,
+            Placeholder = false,
             Network = dataNode["studios"]?.Select(x => x["name"]?.ToString()).OfType<string>().ToPsv(),
             ShowLanguage = dataNode["audioLanguages"]?.ToString(),
             Country = dataNode["originalCountry"]?.ToString(),
@@ -1358,6 +1360,7 @@ public static class API
             TvdbCode = jToken.GetMandatoryInt("id", TVDoc.ProviderType.TheTVDB),
             IsSearchResultOnly = false,
             Dirty = false,
+            Placeholder = false,
             Slug = ((string?)jToken["slug"])?.Trim(),
             Genres = GetGenres(r),
             ShowLanguage = jToken["originalLanguage"]?.ToString(),

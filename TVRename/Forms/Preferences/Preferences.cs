@@ -44,7 +44,6 @@ public partial class Preferences : Form
         FillLanguageList();
         SetupTimezoneDropdown();
         SetupTmdbDropDowns();
-        SetupThemeDropdown();
         SetupRssGrid();
         SetupReplacementsGrid();
         FillFolderStringLists();
@@ -59,6 +58,11 @@ public partial class Preferences : Form
         }
     }
 
+    public async Task InitialiseAsync()
+    {
+        await SetupThemeDropdownAsync();
+    }
+
     private void SetupTimezoneDropdown()
     {
         cbTimeZone.BeginUpdate();
@@ -70,11 +74,11 @@ public partial class Preferences : Form
         cbTimeZone.EndUpdate();
     }
 
-    private void SetupThemeDropdown()
+    private async Task SetupThemeDropdownAsync()
     {
         cbTheme.BeginUpdate();
         cbTheme.Items.Clear();
-        foreach (ThemeChoice choice in ThemeManager.Choices())
+        foreach (ThemeChoice choice in await ThemeManager.ChoicesAsync())
         {
             cbTheme.Items.Add(choice);
         }
@@ -121,7 +125,7 @@ public partial class Preferences : Form
 
         if (!previousTheme.Equals(TVSettings.Instance.Theme, StringComparison.OrdinalIgnoreCase) && cbTheme.SelectedItem is ThemeChoice theme)
         {
-            MessageBox.Show(this, $"TV Rename will use the \"{theme.Name}\" theme the next time it starts.", "Theme",
+            ThemeableMessageBox.Show(this, $"TV Rename will use the \"{theme.Name}\" theme the next time it starts.", "Theme",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -158,7 +162,7 @@ public partial class Preferences : Form
             return;
         }
 
-        MessageBox.Show(
+        ThemeableMessageBox.Show(
             "Please check that the proposed location/path is a valid one and has no invalid characters",
             "Preferences", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
@@ -216,7 +220,7 @@ public partial class Preferences : Form
             return;
         }
 
-        MessageBox.Show(
+        ThemeableMessageBox.Show(
             "Exporters can only export to the local filesystem and must be a valid file/folder name",
             "Preferences", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
@@ -232,7 +236,7 @@ public partial class Preferences : Form
             return;
         }
 
-        MessageBox.Show(
+        ThemeableMessageBox.Show(
             "Extensions list must be separated by semicolons, and each extension must start with a dot.",
             "Preferences", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
@@ -248,7 +252,7 @@ public partial class Preferences : Form
             return;
         }
 
-        MessageBox.Show(
+        ThemeableMessageBox.Show(
             "Extensions list must be separated by semicolons.",
             "Preferences", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 

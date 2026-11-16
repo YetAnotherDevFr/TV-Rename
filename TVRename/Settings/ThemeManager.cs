@@ -81,15 +81,16 @@ internal static class ThemeManager
     }
 
     // Light (the standard look), every theme file found, and Same as Windows
-    internal static List<ThemeChoice> Choices()
+    internal static async Task<List<ThemeChoice>> ChoicesAsync()
     {
         List<ThemeChoice> themes = [];
         try
         {
-            foreach (string path in Directory.GetFiles(ThemesFolder, "*" + Theme.FILE_SUFFIX))
+            DirectoryInfo themesFolder = new(ThemesFolder);
+            foreach (FileInfo path in await themesFolder.GetFilesAsync("*" + Theme.FILE_SUFFIX))
             {
-                string key = Theme.KeyFromPath(path);
-                themes.Add(new ThemeChoice(key, Theme.ReadDisplayName(path) ?? $"{key} (has a mistake)"));
+                string key = Theme.KeyFromPath(path.FullName);
+                themes.Add(new ThemeChoice(key, Theme.ReadDisplayName(path.FullName) ?? $"{key} (has a mistake)"));
             }
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
@@ -102,11 +103,10 @@ internal static class ThemeManager
             themes.Add(new ThemeChoice(DARK, DARK));
         }
 
-        List<ThemeChoice> choices = [new ThemeChoice(LIGHT, "Light (default)")];
+        List<ThemeChoice> choices = [new ThemeChoice(WINDOWS, "Same as Windows (default)"), new ThemeChoice(LIGHT, "Light")];
         choices.AddRange(themes
             .OrderBy(t => t.Key.Equals(DARK, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
             .ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase));
-        choices.Add(new ThemeChoice(WINDOWS, "Same as Windows"));
         return choices;
     }
 
@@ -205,6 +205,6 @@ internal static class ThemeManager
             + "Backups folder, and the original built in themes are in the Defaults folder; copy one of them back over the "
             + "theme file to undo a change.";
         StartupProblems.Clear();
-        MessageBox.Show(owner, message, "TV Rename theme", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Forms.ThemeableMessageBox.Show(owner, message, "TV Rename theme", MessageBoxButtons.OK, MessageBoxIcon.Warning);
     }
 }
