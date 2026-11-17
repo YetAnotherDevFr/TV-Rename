@@ -5,7 +5,7 @@ public class ThemeableMessageBox : Form
 {
     // Windows API to force dark title bar (Windows 10 build 18985+ and Windows 11)
     [DllImport("dwmapi.dll")]
-    private static extern int   DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
     private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 
     private ThemeableMessageBox(string text, string caption, MessageBoxButtons buttons, MessageBoxIcon icon)
@@ -17,7 +17,6 @@ public class ThemeableMessageBox : Form
         this.MinimizeBox = false;
         this.ShowInTaskbar = false;
         this.StartPosition = FormStartPosition.CenterParent;
-        this.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
         this.AutoScaleMode = AutoScaleMode.Font;
 
         // 2. Layout Panels
@@ -77,9 +76,12 @@ public class ThemeableMessageBox : Form
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
-        // Apply dark mode to the native window title bar
-        int useDarkMode = 1;
-        DwmSetWindowAttribute(Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int));
+        // Apply dark mode to the native window title bar if needed
+        if (ThemeManager.IsDark)
+        { 
+            int useDarkMode = 1;
+            DwmSetWindowAttribute(Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int));
+        }
     }
 
     private void AddButtons(Panel container, MessageBoxButtons buttons)
