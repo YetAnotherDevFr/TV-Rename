@@ -11,22 +11,15 @@ namespace TVRename;
 internal class FolderBaseMatchesDefault(ShowConfiguration show, TVDoc doc) : TvShowCheck(show, doc)
 {
     public override string CheckName => "[TV] Base folder is not consistent with setting for new shows";
-    public override string Explain() => $"This TV show has a base folder that does not match the default. {Show.AutoAddFolderBase} is current value, default is {DefaultFolder(Show.AutoAddFolderBase)}";
-
-    public override bool Check()
-    {
-        string currentFolder = Show.AutoAddFolderBase.EnsureEndsWithSeparator();
-        string newlyCreatedSettingsFolder = DefaultFolder(currentFolder);
-
-        return !string.Equals(currentFolder ,newlyCreatedSettingsFolder,StringComparison.OrdinalIgnoreCase);
-    }
+    public override string Explain() => $"This TV show has a base folder that does not match the default. {OldValue} is current value, default is {NewValue}";
+    public override bool Check() => !string.Equals(OldValue, NewValue, StringComparison.OrdinalIgnoreCase);
+    private string OldValue => Show.AutoAddFolderBase.EnsureEndsWithSeparator();
+    private string NewValue => DefaultFolder(Show.AutoAddFolderBase);
 
     private string DefaultFolder(string currentFolder)
     {
-        string libraryFolder = FindBestLibraryFolder(currentFolder, TVSettings.Instance.LibraryFolders);
-        string newlyCreatedSettingsFolder = libraryFolder.EnsureEndsWithSeparator()
-                                 + TVSettings.Instance.DefaultTVShowFolder(Show);
-        return newlyCreatedSettingsFolder.EnsureEndsWithSeparator();
+        return FindBestLibraryFolder(currentFolder, TVSettings.Instance.LibraryFolders)
+            + TVSettings.Instance.DefaultTVShowFolder(Show).EnsureEndsWithSeparator();
     }
 
     private static string FindBestLibraryFolder(string currentFolder, SafeList<string> libraryFolders)
@@ -35,33 +28,57 @@ internal class FolderBaseMatchesDefault(ShowConfiguration show, TVDoc doc) : TvS
         {
             if (currentFolder.StartsWith(libFolder,StringComparison.OrdinalIgnoreCase))
             {
-                return libFolder;
+                return libFolder.EnsureEndsWithSeparator();
             }
         }
-        return libraryFolders.FirstOrDefault() ?? string.Empty;
+        return libraryFolders.FirstOrDefault()?.EnsureEndsWithSeparator() ?? string.Empty;
     }
 
-    /// <exception cref="FixCheckException">Can't fix movie</exception>
+    /// <exception cref="FixCheckException">Can't fix show</exception>
     protected override async Task FixInternal()
     {
         //Store the old folder
-        string oldFolder = Show.AutoAddFolderBase;
-        string newFolder = DefaultFolder(Show.AutoAddFolderBase);
+        string oldFolderValue = Show.AutoAddFolderBase;
 
         //Update the folder to the new value
-        Show.AutoAddFolderBase = newFolder;
+        Show.AutoAddFolderBase = NewValue;
 
         //Create the new location if needed and move files
-        if (Directory.Exists(newFolder))
+        if (Directory.Exists(NewValue))
         {
-            await FileHelper.MergeDirectoriesAsync(oldFolder, newFolder);
+            await FileHelper.MergeDirectoriesAsync(OldValue, NewValue);
         }
         else
         {
-            CopyMoveResult result = Directory.Move(oldFolder, newFolder, MoveOptions.CopyAllowed);
-            if (result.ErrorCode != 0)
+            string message = $"Could not move files for {Show.ShowName}. Would have liked to move files from [{OldValue}] to '{NewValue}'";
+
+            try
             {
-                throw new FixCheckException($"Could not move from {oldFolder} to {newFolder} Error was:{result.ErrorMessage}");
+                CopyMoveResult result = Directory.Move(OldValue, NewValue, MoveOptions.CopyAllowed);
+                if (result.ErrorCode != 0)
+                {
+                    Show.AutoAddFolderBase = oldFolderValue; // revert to old value if move fails
+                    throw new FixCheckException($"Could not move from {OldValue} to {NewValue} Error was:{result.ErrorMessage}");
+                }
+            }
+            catch (UnauthorizedAccessException uae)
+            {
+                Show.AutoAddFolderBase = oldFolderValue; // revert to old value if move fails
+                throw new FixCheckException(message + ": " + uae.Message, uae);
+            }
+            catch (System.IO.DirectoryNotFoundException)
+            {
+                //the source was not present anyway, so do nothing
+            }
+            catch (System.IO.PathTooLongException ptle)
+            {
+                Show.AutoAddFolderBase = oldFolderValue; // revert to old value if move fails
+                throw new FixCheckException(message + ": " + ptle.Message, ptle);
+            }
+            catch (System.IO.IOException ex)
+            {
+                Show.AutoAddFolderBase = oldFolderValue; // revert to old value if move fails
+                throw new FixCheckException(message + ": " + ex.Message, ex);
             }
         }
     }
