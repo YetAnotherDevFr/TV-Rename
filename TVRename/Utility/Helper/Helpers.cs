@@ -8,7 +8,10 @@
 
 using Microsoft.Win32;
 using Polly;
+using Polly.Retry;
+using System.Net.Http;
 using System.Reflection;
+using TMDbLib.Objects.Exceptions;
 
 #pragma warning disable CS0162
 
@@ -168,7 +171,7 @@ public static class Helpers
     {
         if (text is null)
         {
-            return def??def2;
+            return def ?? def2;
         }
 
         try
@@ -177,7 +180,7 @@ public static class Helpers
         }
         catch
         {
-            return def??def2;
+            return def ?? def2;
         }
     }
     public static float ToPercent(this string text, float def)
@@ -234,23 +237,28 @@ public static class Helpers
 
     #endregion
 
-    public static T WithRetry<T>(this Func<T> operation, int retryTimes, TimeSpan delay,
-        Func<Exception, bool> retryableException, string message)
+    public static async ValueTask<T> WithRetryAsync<T>(this Func<CancellationToken, ValueTask<T>> operation, int retryTimes, TimeSpan delay, string message, CancellationToken cancellationToken)
     {
-        Policy retryPolicy = Policy
-            .Handle(retryableException)
-            .WaitAndRetry(
-                retryTimes,
-                _ => delay,
-                (exception, timeSpan, retryCount, _) =>
+        var pipeline = new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<RequestLimitExceededException>(),
+                MaxRetryAttempts = retryTimes,
+                Delay = delay,
+                BackoffType = DelayBackoffType.Linear,
+                UseJitter = true,
+                OnRetry = args =>
                 {
-                    Logger.Warn(exception,
-                        $"Retry {retryCount}/{retryTimes}, waiting {timeSpan} to {message}.");
-                });
+                    Logger.Warn($"{message} Retrying in {args.RetryDelay.TotalSeconds} seconds. Retry attempt {args.AttemptNumber}.");
+                    return ValueTask.CompletedTask;
+                }
+            })
+            .AddTimeout(TimeSpan.FromSeconds(20))
+            .Build();
 
-        return retryPolicy.Execute(operation);
+        return await pipeline.ExecuteAsync(operation, cancellationToken);
     }
-    
+
     public static bool IsSystemDarkMode()
     {
         try
