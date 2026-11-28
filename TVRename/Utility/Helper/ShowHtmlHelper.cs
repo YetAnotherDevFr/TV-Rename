@@ -8,6 +8,7 @@
 
 
 using System.Globalization;
+using System.Net;
 using TVRename.Forms;
 using TVRename.Properties;
 using TVRename.YTS;
@@ -533,6 +534,8 @@ internal static class ShowHtmlHelper
         string runTimeHtml = string.IsNullOrWhiteSpace(ser.Runtime) ? string.Empty : $"<br/> {ser.Runtime} min";
         string actorLinks = ser.GetActors().Select(ActorLinkHtml).ToCsv();
         string dayTime = $"{ser.AirsDay} {ParseAirsTime(ser)}";
+        int? tmdbId = si?.TmdbCode is > 0 ? si.TmdbCode : ser.TmdbCode;
+        string networksAndAirs = await NetworksAndAirsHtmlAsync(tmdbId, [.. ser.Networks], dayTime, includeDirectoryLinks);
 
         string imdbLink = ser.Imdb.ToImdbLink();
         string? mazeLink = ser.TvMazeCode <= 0 ? string.Empty : ser.WebUrl;
@@ -540,7 +543,7 @@ internal static class ShowHtmlHelper
         string tvdbLink = ser.TvdbCode > 0 ? TheTVDB.API.WebsiteShowUrl(ser) ?? string.Empty : string.Empty;
 
         string urlFilename = includeDirectoryLinks && (si is not null)
-            ? Uri.EscapeDataString((await si.GetBestFolderLocationToOpenAsync()) ?? string.Empty)
+            ? Uri.EscapeDataString((await si.GetBestFolderLocationToOpenAsync(CancellationToken.None)) ?? string.Empty)
             : string.Empty;
         string explorerButton = includeDirectoryLinks
             ? CreateExploreButton(urlFilename)
@@ -611,12 +614,40 @@ internal static class ShowHtmlHelper
 			        </div>
 		            <div class=""row align-items-bottom flex-grow-1"">
                      <div class=""col-md-4 align-self-end"">{stars}<br>{siteRating}{AddRatingCount(ser.SiteRatingVotes)}</div>
-                     <div class=""col-md-4 align-self-end text-center"">{ser.ContentRating}<br>{ser.Networks.ToCsv()}, {dayTime}</div>
+                     <div class=""col-md-4 align-self-end text-center"">{ser.ContentRating}<br>{networksAndAirs}</div>
                      <div class=""col-md-4 align-self-end text-right"">{genreIcons}<br>{ser.Genres.ToCsv()}</div>
                     </div>
                    </div>
                   </div>
                  </div>");
+    }
+
+    // "CBS, Thursday 20:00", with TMDB's logo in place of a network's name where it has one.
+    // Only the full page asks TMDB, as it checks the show is still selected; the quick first page uses what is known
+    private static async Task<string> NetworksAndAirsHtmlAsync(int? tmdbId, List<string> networks, string dayTime, bool askTmdb)
+    {
+        List<string> parts = [];
+        foreach (string network in networks)
+        {
+            string logo = string.Empty;
+            if (tmdbId is > 0)
+            {
+                logo = askTmdb
+                    ? await TMDB.LocalCache.GetNetworkLogoAsync(tmdbId.Value, network, CancellationToken.None)
+                    : TMDB.LocalCache.KnownNetworkLogo(tmdbId.Value, network);
+            }
+            parts.Add(logo.HasValue() ? NetworkLogoHtml(logo, network) : network);
+        }
+
+        return $"{parts.ToCsv()}, {dayTime}";
+    }
+
+    // Logos are made for a light background, so they sit on one in every theme; the name shows if the picture won't load
+    private static string NetworkLogoHtml(string url, string network)
+    {
+        string name = WebUtility.HtmlEncode(network);
+        return $"<img src=\"{WebUtility.HtmlEncode(url)}\" alt=\"{name}\" title=\"{name}\" onerror=\"this.replaceWith(this.alt)\""
+               + " style=\"height:24px;max-width:120px;object-fit:contain;padding:2px 5px;border-radius:3px;background:#fff;vertical-align:middle\">";
     }
 
     private static string PrettyPrint(float? rating) => rating is > 0 ? rating.Value + "/10" : string.Empty;
@@ -894,9 +925,9 @@ internal static class ShowHtmlHelper
         return ser.AirsTime?.ToString("h tt") ?? string.Empty;
     }
 
-    private static async Task<string> GetBestFolderLocationToOpenAsync(this ShowConfiguration si)
+    private static async Task<string> GetBestFolderLocationToOpenAsync(this ShowConfiguration si, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrEmpty(si.AutoAddFolderBase) && await FileHelper.DirectoryExistsAsync(si.AutoAddFolderBase))
+        if (!string.IsNullOrEmpty(si.AutoAddFolderBase) && await FileHelper.DirectoryExistsAsync(si.AutoAddFolderBase, cancellationToken))
         {
             return si.AutoAddFolderBase;
         }
@@ -1609,7 +1640,7 @@ internal static class ShowHtmlHelper
                + $"<body style=\"background-color: {backgroundColour.HexColour()}; color: {foregroundColour.HexColour()}\" ><div class=\"col-sm-{size} offset-sm-{(12 - size) / 2}\">";
     }
 
-    private static string HexColour(this Color c)
+    internal static string HexColour(this Color c)
         => "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
 
     // Bootstrap's tables, season rows, buttons and muted text are made for a light page
@@ -1728,7 +1759,7 @@ internal static class ShowHtmlHelper
         return body;
     }
 
-    private static string WideBannerUrl(this ShowConfiguration series)
+    internal static string WideBannerUrl(this ShowConfiguration series)
     {
         string? url = series.CachedShow?.GetSeriesWideBannerPath();
 
